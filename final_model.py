@@ -26,8 +26,18 @@ def load_lstm_model():
     
 def load_rf_model():
     try:
-        with open('D:/Qwegle/Qwegle/Algorithmic_Trading/random_forest.pkl', 'rb') as f:
+        rf_url = "https://drive.google.com/uc?id=1DA61ThQicrmJUlZTZiGH9rpt03KHRTAL"
+        temp_file = "temp_rf.pkl"  # Temporary file
+
+        # Download the model temporarily
+        gdown.download(rf_url, temp_file, quiet=False)
+
+        # Load the model from the temp file
+        with open(temp_file, "rb") as f:
             rf_model = pickle.load(f)
+
+        # Remove temp file after loading
+        os.remove(temp_file)
         with open('D:/Qwegle/Qwegle/Algorithmic_Trading/scaler1.pkl', 'rb') as f:
             scaler = pickle.load(f)
         with open('D:/Qwegle/Qwegle/Algorithmic_Trading/target_scaler1.pkl', 'rb') as f:
