@@ -1,4 +1,4 @@
-name: Dev Branch Checks
+name: Stock Price Prediction Dev Checks
 
 on:
   push:
@@ -33,18 +33,19 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
+          pip install pandas scikit-learn tensorflow yfinance fastapi pytest flake8
 
       - name: Run Linting
         run: |
-          pip install flake8
           flake8 . --count --show-source --statistics
 
-      - name: Run Tests
+      - name: Run Unit Tests
         run: |
-          pytest --maxfail=5 --disable-warnings
+          pytest tests/ --maxfail=5 --disable-warnings
 
-      - name: Build Verification (if applicable)
+      - name: Verify FastAPI App
         run: |
-          echo "Building the project..."
-          # Add build commands here, e.g., npm build, docker build, etc.
-          echo "Build successful."
+          uvicorn api:app --host 127.0.0.1 --port 8000 --reload &
+          sleep 5
+          curl -f http://127.0.0.1:8000/docs || (echo "FastAPI server failed to start" && exit 1)
+          echo "FastAPI app is running successfully."
