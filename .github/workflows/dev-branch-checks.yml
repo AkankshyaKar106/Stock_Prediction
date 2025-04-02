@@ -1,0 +1,50 @@
+name: Dev Branch Checks
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  check_changes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for changes
+        run: |
+          if git diff --name-only HEAD^ | grep -q .; then
+            echo "Changes detected in dev branch. Running checks..."
+          else
+            echo "No changes detected. Skipping checks."
+            exit 0
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run Linting
+        run: |
+          pip install flake8
+          flake8 . --count --show-source --statistics
+
+      - name: Run Tests
+        run: |
+          pytest --maxfail=5 --disable-warnings
+
+      - name: Build Verification (if applicable)
+        run: |
+          echo "Building the project..."
+          # Add build commands here, e.g., npm build, docker build, etc.
+          echo "Build successful."
