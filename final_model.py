@@ -12,6 +12,8 @@ from keras.metrics import MeanSquaredError
 import talib
 import pytz
 import sqlite3
+import gdown
+import os
 
 def load_lstm_model():
     try:
