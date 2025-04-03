@@ -5,11 +5,9 @@ import yfinance as yf
 import pytz
 import streamlit as st
 
-
 def get_target_price(ticker, target_date, target_time):
     try:
-        target_datetime = datetime.strptime(
-            f"{target_date} {target_time}", '%Y-%m-%d %H:%M:%S')
+        target_datetime = datetime.strptime(f"{target_date} {target_time}", '%Y-%m-%d %H:%M:%S')
 
         ist = pytz.timezone('Asia/Kolkata')
         target_datetime = ist.localize(target_datetime)
@@ -45,7 +43,6 @@ def get_target_price(ticker, target_date, target_time):
         print(f"Error in get_target_price: {str(e)}")
         return None, None
 
-
 def calculate_prediction_accuracy(predicted_price, actual_price):
     if predicted_price is None or actual_price is None:
         return None, None
@@ -54,7 +51,6 @@ def calculate_prediction_accuracy(predicted_price, actual_price):
     percentage_diff = (absolute_diff / actual_price) * 100
 
     return absolute_diff, percentage_diff
-
 
 def analyze_predictions():
     st.title("Stock Price Prediction Analysis")
