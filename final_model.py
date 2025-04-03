@@ -35,7 +35,7 @@ def load_lstm_model():
 
 def load_rf_model():
     try:
-        rf_url="https://drive.google.com/uc?id=1DA61ThQicrmJUlZTZiGH9rpt03KHRTAL"
+        rf_url = "https://drive.google.com/uc?id=1DA61ThQicrmJUlZTZiGH9rpt03KHRTAL"
         temp_file = "temp_rf.pkl"  # Temporary file
 
         # Download the model temporarily
@@ -221,7 +221,8 @@ def compute_technical_indicators(stock_data):
             df['Volume_Change'] = df['Volume'].pct_change()
             df['Volume_MA_5'] = df['Volume'].rolling(window=5).mean()
 
-        df['ATR']=talib.ATR(high_array, low_array, close_array, timeperiod=14)
+        df['ATR'] = talib.ATR(
+            high_array, low_array, close_array, timeperiod=14)
         df['ROC'] = talib.ROC(close_array, timeperiod=10)
         df['MOM'] = talib.MOM(close_array, timeperiod=10)
 
@@ -252,7 +253,7 @@ def predict_next_hour_price(
             span=10, min_periods=10).std().iloc[-1] * np.sqrt(6.5)
         hourly_volatility = volatility / np.sqrt(6.5)
 
-        stock_data['EMA_5']=stock_data['Close'].ewm(
+        stock_data['EMA_5'] = stock_data['Close'].ewm(
             span=5, adjust=False).mean()
 
         for period in [1, 2, 3, 4, 6, 8]:  # Hours instead of days
@@ -268,7 +269,8 @@ def predict_next_hour_price(
             stock_data['6h_return'].iloc[-1],
             stock_data['8h_return'].iloc[-1]
         ]
-        weighted_trend=sum(w * t for w, t in zip(trend_weights, trend_signals))
+        weighted_trend = sum(
+            w * t for w, t in zip(trend_weights, trend_signals))
 
         last_prices = stock_data['Close'].tail(7)
         avg_price = last_prices.mean()
@@ -297,7 +299,7 @@ def predict_next_hour_price(
         predicted_change = (predicted_price - last_close) / last_close
 
         volatility_multiplier = 1.5
-        max_hourly_move=last_close * hourly_volatility * volatility_multiplier
+        max_hourly_move = last_close * hourly_volatility * volatility_multiplier
 
         trend_weight = 0.2
         trend_adjustment = weighted_trend * trend_weight
@@ -333,8 +335,8 @@ def predict_next_hour_price(
         ma_boundary = 0.02
         ema5_price = stock_data['EMA_5'].iloc[-1]
 
-        if abs(
-            (final_predicted_price - ema5_price) / ema5_price) > ma_boundary:
+        if abs((final_predicted_price - ema5_price) / ema5_price
+               ) > ma_boundary:
             final_predicted_price = ema5_price * (
                 1 + np.sign(final_predicted_price - ema5_price) * ma_boundary)
 
@@ -565,7 +567,8 @@ def process_ticker_data(
         prediction_data = {
             "Ticker": ticker,
             "Prediction Type": prediction_type,
-            "Prediction Created": prediction_created_at.strftime('%Y-%m-%d %H:%M:%S IST'),
+            "Prediction Created": prediction_created_at.strftime(
+                '%Y-%m-%d %H:%M:%S IST'),
             "Target Prediction Date": adjusted_datetime.strftime('%Y-%m-%d'),
             "Target Prediction Time": adjusted_datetime.strftime('%H:%M IST'),
             "Predicted Price": round(
@@ -693,8 +696,9 @@ def save_prediction(prediction_data):
         st.write(f"Target Time: {target_time}")
 
         insert_query = '''INSERT INTO predictions
-                         (ticker, prediction_type, prediction_created, target_date, target_time,
-                          predicted_price, signal, reason, sentiment_score)
+                         (ticker, prediction_type, prediction_created,
+                          target_date, target_time, predicted_price, signal,
+                          reason, sentiment_score)
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'''
 
         values = (prediction_data['Ticker'],
