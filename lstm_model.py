@@ -9,15 +9,18 @@ from tensorflow.keras.callbacks import ModelCheckpoint
 from sklearn.model_selection import train_test_split
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer  # For sentiment labeling
 
+
 def load_data(file_path):
     df = pd.read_csv(file_path)
     df.dropna(subset=['Headline'], inplace=True)
     return df['Headline'].values
 
+
 def generate_sentiment_scores(headlines):
     analyzer = SentimentIntensityAnalyzer()
     scores = [analyzer.polarity_scores(text)['compound'] for text in headlines]
     return np.array(scores)  
+
 
 def preprocess_data(headlines, max_words=5000, max_len=100):
     tokenizer = Tokenizer(num_words=max_words, oov_token="<OOV>")
@@ -25,6 +28,7 @@ def preprocess_data(headlines, max_words=5000, max_len=100):
     sequences = tokenizer.texts_to_sequences(headlines)
     padded_sequences = pad_sequences(sequences, maxlen=max_len, padding='post', truncating='post')
     return padded_sequences, tokenizer
+
 
 def load_glove_embeddings(glove_path, tokenizer, embedding_dim=300):
     embeddings_index = {}
@@ -49,6 +53,7 @@ def load_glove_embeddings(glove_path, tokenizer, embedding_dim=300):
                 
     return embedding_matrix
 
+
 def build_lstm_model(max_words, max_len, embedding_matrix, embedding_dim=300):
     model = Sequential([
         Embedding(input_dim=len(tokenizer.word_index) + 1,  
@@ -65,6 +70,8 @@ def build_lstm_model(max_words, max_len, embedding_matrix, embedding_dim=300):
     
     model.compile(optimizer='adam', loss='mse', metrics=['mae'])
     return model
+
+
 if __name__ == "__main__":
     
     glove_path = "D:/Qwegle/Qwegle/Algorithmic_Trading/glove.840B.300d.txt"
@@ -82,9 +89,13 @@ if __name__ == "__main__":
     embedding_matrix = load_glove_embeddings(
         glove_path, tokenizer, embedding_dim)
     
-    y = np.zeros(len(x))
+    y = generate_sentiment_scores(headlines)
+    
     x_train, x_val, y_train, y_val = train_test_split(
         x, y, test_size=0.2, random_state=42)
+    
+    embedding_matrix = load_glove_embeddings(
+        glove_path, tokenizer, embedding_dim)
     
     model = build_lstm_model(
         max_words, max_len, embedding_matrix, embedding_dim)
