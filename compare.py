@@ -7,7 +7,9 @@ import streamlit as st
 
 def get_target_price(ticker, target_date, target_time):
     try:
-        target_datetime = datetime.strptime(f"{target_date} {target_time}", '%Y-%m-%d %H:%M:%S')
+        target_datetime = datetime.strptime(
+            f"{target_date} {target_time}", '%Y-%m-%d %H:%M:%S')
+
         ist = pytz.timezone('Asia/Kolkata')
         target_datetime = ist.localize(target_datetime)
         start_date = target_datetime.date()
@@ -16,18 +18,22 @@ def get_target_price(ticker, target_date, target_time):
         for suffix in ['.NS', '.BO', '']:
             try:
                 stock = yf.Ticker(ticker + suffix)
-                hist = stock.history(start=start_date, end=end_date, interval='1m')
+                hist = stock.history(
+                    start=start_date, end=end_date, interval='1m')
 
                 if not hist.empty:
                     hist_times = pd.to_datetime(hist.index).tz_convert('Asia/Kolkata')
-                    closest_time_idx = (abs(hist_times - target_datetime)).argmin()
+                    closest_time_idx = (
+                        abs(hist_times - target_datetime)).argmin()
                     closest_price = hist['Close'][closest_time_idx]
                     actual_time = hist_times[closest_time_idx]
 
                     return closest_price, actual_time
 
             except Exception as e:
-                print(f"Error fetching historical price for {ticker + suffix}: {str(e)}")
+                print(
+                    f"Error fetching historical price for {ticker + suffix}: {str(e)}"
+                    )
                 continue
 
         return None, None
@@ -83,10 +89,12 @@ def analyze_predictions():
                 status.text(f"Processing {row['ticker']}...")
 
                 try:
-                    actual_price, actual_time = get_target_price(row['ticker'], row['target_date'], row['target_time'])
+                    actual_price, actual_time = get_target_price(
+                        row['ticker'], row['target_date'], row['target_time'])
 
                     if actual_price is not None:
-                        abs_diff, pct_diff = calculate_prediction_accuracy(row['predicted_price'], actual_price)
+                        abs_diff, pct_diff = calculate_prediction_accuracy(
+                            row['predicted_price'], actual_price)
 
                         st.write(f"**Ticker: {row['ticker']}**")
                         col1, col2, col3 = st.columns(3)
@@ -107,7 +115,8 @@ def analyze_predictions():
                         predictions_df.at[idx,
                                           'Percentage Difference'] = pct_diff
                     else:
-                        st.warning(f"Could not fetch target time price for {row['ticker']}")
+                        st.warning(
+                            f"Could not fetch target time price for {row['ticker']}")
                 except Exception as e:
                     st.error(f"Error processing {row['ticker']}: {str(e)}")
 
