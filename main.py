@@ -1,23 +1,15 @@
 import sqlite3
 import pandas as pd
-import yfinance as yf
-import numpy as np
-from fastapi import FastAPI, HTTPException, Query, Depends, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from datetime import datetime, timedelta, date, time
 import pytz
 import uuid
-import traceback
 import uvicorn
 
 from final_model import (
-    load_lstm_model, load_rf_model, 
-    fetch_bse_sensex_tickers, fetch_nse_nifty_500_tickers, 
-    fetch_stock_data, collect_sentiment_data, 
-    calculate_sentiment_score, add_previous_close_column, 
-    compute_technical_indicators, predict_next_hour_price, 
-    predict_next_day_price, calculate_difference_and_signal, 
+    load_lstm_model, load_rf_model, fetch_stock_data,
     get_next_market_datetime, process_ticker_data
 )
 
@@ -39,24 +31,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Pydantic Models
 class PredictionRequest(BaseModel):
     Indices: str
     Ticker: str
     Prediction_Type: str
-    Prediction_Created: datetime = Field(..., description="Format: 'YYYY-MM-DD HH:MM:SS'")
-    Target_Prediction_Date: date = Field(..., description="Format: 'YYYY-MM-DD'")
+    Prediction_Created: datetime = Field(...,
+                                         description="Format: 'YYYY-MM-DD HH:MM:SS'")
+    Target_Prediction_Date: date = Field(...,
+                                         description="Format: 'YYYY-MM-DD'")
     Target_Prediction_Time: time = Field(..., description="Format: 'HH:MM'")
     Predicted_Price: float
     Signal: str
     Reason: str
     Sentiment_Score: float
 
+
 # Database Initialization
 @app.on_event("startup")
 def startup_event():
-    """Initialize database and load machine learning models on application startup"""
-    global lstm_model, tokenizer, rf_model, scaler, sentiment_scaler, target_scaler
+
+    global lstm_model, tokenizer, rf_model, scaler
+    global sentiment_scaler, target_scaler
 
     try:
         # Database Initialization
@@ -103,35 +100,36 @@ def startup_event():
     except Exception as e:
         print(f"Model loading error: {e}")
 
-# Include the predict_stock_price_endpoint from the second file
 
+# Include the predict_stock_price_endpoint from the second file
 @app.get("/predict_stock_price/")
 def predict_stock_price_endpoint(
-    index: str = Query(..., enum=["BSE Sensex (^BSESN)", "NSE Nifty 500 (^NSEI)"]),
+    index: str = Query(...,
+                       enum=["BSE Sensex (^BSESN)", "NSE Nifty 500 (^NSEI)"]),
     tickers: list[str] = Query(...),
-    prediction_option: str = Query(..., enum=["Next Hour", "Next Day", "Custom Time"]),
+    prediction_option: str = Query(...,
+                                   enum=["Next Hour", "Next Day", "Custom Time"]),
     prediction_date: str = None,
     prediction_time: str = None
 ):
     try:
 
         current_ist_time = datetime.now(ist_timezone)
-        
+
         if prediction_option == "Custom Time":
             if not prediction_date or not prediction_time:
                 return {"error": "Custom time requires both date and time."}
-            prediction_datetime = ist_timezone.localize(datetime.strptime(f"{prediction_date} {prediction_time}", "%Y-%m-%d %H:%M"))
+            prediction_datetime = ist_timezone.localize(
+                datetime.strptime(f"{prediction_date} {prediction_time}", "%Y-%m-%d %H:%M"))
         elif prediction_option == "Next Day":
             prediction_datetime = current_ist_time + timedelta(days=1)
         else:
             prediction_datetime = current_ist_time + timedelta(hours=1)
 
-        
+        adjusted_datetime, market_message = get_next_market_datetime(
+            prediction_datetime, prediction_option)   
 
-        adjusted_datetime, market_message = get_next_market_datetime(prediction_datetime, prediction_option)
-        
-
-        batch_prediction_id = str(uuid.uuid4())  
+        batch_prediction_id = str(uuid.uuid4())
         all_prediction_data = []
         failed_tickers = []
         prediction_created_at = datetime.now(ist_timezone)
@@ -143,12 +141,13 @@ def predict_stock_price_endpoint(
         for ticker in tickers:
             try:
                
-                stock_data = fetch_stock_data(ticker, adjusted_datetime.strftime('%Y-%m-%d'))
+                stock_data = fetch_stock_data(
+                    ticker, adjusted_datetime.strftime('%Y-%m-%d'))
                 if stock_data is None or len(stock_data) == 0:
-                    failed_tickers.append({"ticker": ticker, "reason": "No stock data available"})
+                    failed_tickers.append({
+                        "ticker": ticker, "reason": "No stock data available"})
                     continue
 
-                
                 prediction_data = process_ticker_data(
                     ticker, adjusted_datetime, prediction_created_at, stock_data,
                     lstm_model, tokenizer, rf_model, scaler, sentiment_scaler, target_scaler,
@@ -156,8 +155,6 @@ def predict_stock_price_endpoint(
                 )
 
                 if prediction_data:
-                    
-
                     cursor.execute('''
                         INSERT INTO predictions 
                         (indices, ticker, prediction_type, prediction_created, 
@@ -370,14 +367,6 @@ async def clear_predictions():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Model Loading (optional - can be integrated with startup event)
-'''@app.on_event("startup")
-def load_models():
-    """Load machine learning models on startup"""
-    global lstm_model, tokenizer, rf_model, scaler, sentiment_scaler, target_scaler
-    
-    lstm_model, tokenizer = load_lstm_model()
-    rf_model, scaler, sentiment_scaler, target_scaler = load_rf_model()'''
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8002, reload=True)
