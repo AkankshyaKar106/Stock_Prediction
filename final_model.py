@@ -35,7 +35,8 @@ def load_lstm_model():
 
 def load_rf_model():
     try:
-        rf_url = "https://drive.google.com/uc?id=1DA61ThQicrmJUlZTZiGH9rpt03KHRTAL"
+        rf_url = (
+            "https://drive.google.com/uc?id=1DA61ThQicrmJUlZTZiGH9rpt03KHRTAL")
         temp_file = "temp_rf.pkl"  # Temporary file
 
         # Download the model temporarily
@@ -299,7 +300,8 @@ def predict_next_hour_price(
         predicted_change = (predicted_price - last_close) / last_close
 
         volatility_multiplier = 1.5
-        max_hourly_move = last_close * hourly_volatility * volatility_multiplier
+        max_hourly_move = (
+            last_close * hourly_volatility * volatility_multiplier)
 
         trend_weight = 0.2
         trend_adjustment = weighted_trend * trend_weight
@@ -599,6 +601,7 @@ def is_market_open(dt):
 def get_next_market_datetime(dt, prediction_type="Next Hour"):
 
     ist_dt = dt.astimezone(pytz.timezone('Asia/Kolkata'))
+    date_str = ist_dt.strftime('%Y-%m-%d %H:%M')
     message = ""
 
     if ist_dt.weekday() >= 5:
@@ -606,11 +609,13 @@ def get_next_market_datetime(dt, prediction_type="Next Hour"):
         ist_dt = ist_dt + timedelta(days=days_to_monday)
         if prediction_type == "Next Day":
             ist_dt = ist_dt.replace(hour=9, minute=15, second=0, microsecond=0)
-            message = f"Market is closed on weekends. Prediction adjusted to Monday {ist_dt.strftime('%Y-%m-%d %H:%M')} IST"
+            message = (f"Market is closed on weekends."
+                       f"Prediction adjusted to Monday {date_str} IST")
 
         else:
             ist_dt = ist_dt.replace(hour=9, minute=15, second=0, microsecond=0)
-            message = f"Market is closed on weekends. Prediction adjusted to Monday {ist_dt.strftime('%Y-%m-%d %H:%M')} IST"
+            message = (f"Market is closed on weekends."
+                       f"Prediction adjusted to Monday {date_str} IST")
 
         return ist_dt, message
 
@@ -630,7 +635,7 @@ def get_next_market_datetime(dt, prediction_type="Next Hour"):
 
         while ist_dt.weekday() >= 5:
             ist_dt = ist_dt + timedelta(days=1)
-        message = f"Next day prediction set for {ist_dt.strftime('%Y-%m-%d %H:%M')} IST"
+        message = f"Next day prediction set for {date_str} IST"
     else:
         if ist_dt > market_end:
             ist_dt = (
@@ -643,10 +648,14 @@ def get_next_market_datetime(dt, prediction_type="Next Hour"):
                 microsecond=0)
             while ist_dt.weekday() >= 5:
                 ist_dt = ist_dt + timedelta(days=1)
-            message = f"Market is closed. Prediction adjusted to next trading day {ist_dt.strftime('%Y-%m-%d %H:%M')} IST"
+            message = (
+                f"Market is closed. Prediction adjusted to next trading day"
+                f"{date_str} IST")
         elif ist_dt < next_market_start:
             ist_dt = next_market_start
-            message = f"Market is not open yet. Prediction adjusted to market open {ist_dt.strftime('%Y-%m-%d %H:%M')} IST"
+            message = (
+                f"Market is not open yet. Prediction adjusted to market open"
+                f"{date_str} IST")
 
     return ist_dt, message
 
@@ -718,14 +727,16 @@ def save_prediction(prediction_data):
         conn.commit()
 
         c.execute(
-            "SELECT * FROM predictions WHERE ticker=? AND prediction_created=?",
+            (
+                "SELECT * FROM predictions WHERE ticker=?"
+                "AND prediction_created=?"),
             (prediction_data['Ticker'],
              prediction_created))
         saved_record = c.fetchone()
 
         if saved_record:
-            st.success(
-                f"Successfully saved prediction for {prediction_data['Ticker']}")
+            ticker_name = prediction_data['Ticker']
+            st.success(f"Successfully saved prediction for {ticker_name}")
         else:
             st.warning("Insert succeeded but verification failed")
 
@@ -804,7 +815,8 @@ def predict_stock_price():
         try:
             prediction_datetime = datetime.combine(
                 user_selected_date, datetime.min.time())
-            prediction_type = f"Prediction for {user_selected_date.strftime('%Y-%m-%d')}"
+            date_str = user_selected_date.strftime('%Y-%m-%d')
+            prediction_type = f"Prediction for {date_str}"
         except ValueError:
             print("Invalid date format. Using next day's date as default.")
             prediction_datetime = datetime.now() + timedelta(days=1)
@@ -827,7 +839,9 @@ def predict_stock_price():
 
         st.session_state.prediction_attempt += 1
 
-        prediction_creation_key = f'prediction_created_at_{st.session_state.prediction_attempt}'
+        attempt = st.session_state.prediction_attempt
+        prediction_creation_key = f'prediction_created_at_{attempt}'
+
         st.session_state[prediction_creation_key] = datetime.now(ist_timezone)
 
         prediction_created_at = st.session_state[prediction_creation_key]
@@ -840,7 +854,8 @@ def predict_stock_price():
             lstm_model, tokenizer = load_lstm_model()
             rf_model, scaler, target_scaler, sentiment_scaler = load_rf_model()
 
-            if lstm_model is None or rf_model is None or tokenizer is None or scaler is None:
+            if (lstm_model is None or rf_model is None or 
+                    tokenizer is None or scaler is None):
                 st.error("Failed to load models or tokenizer")
                 return
 
@@ -885,7 +900,8 @@ def predict_stock_price():
                                 f"Successfully saved prediction for {ticker}")
                         except Exception as e:
                             st.error(
-                                f"Error saving prediction for {ticker}: {str(e)}")
+                                (f"Error saving prediction for {ticker}:"
+                                 f"{str(e)}"))
                             st.write(f"Results for {ticker}:")
                             st.write(prediction_data)
                 status.empty()
@@ -914,9 +930,9 @@ def predict_stock_price():
 
             st.write("Summary of Predictions:")
             st.dataframe(prediction_df)
-
-            st.write(
-                f"Predictions generated at: {prediction_created_at.strftime('%Y-%m-%d %H:%M:%S IST')}")
+            
+            datetime_str = prediction_created_at.strftime('%Y-%m-%d %H:%M:%S IST')
+            st.write(f"Predictions generated at: {datetime_str}")
 
 
 if __name__ == "__main__":
