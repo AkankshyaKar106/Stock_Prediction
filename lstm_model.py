@@ -67,12 +67,12 @@ def build_lstm_model(max_words, max_len, embedding_matrix, embedding_dim=300):
     return model
 if __name__ == "__main__":
     
-    glove_path = "D:/Qwegle/Qwegle/Algorithmic_Trading/glove.840B.300d.txt"  
+    glove_path = "D:/Qwegle/Qwegle/Algorithmic_Trading/glove.840B.300d.txt"
     sentiment_data_path = "D:/Qwegle/Qwegle/Algorithmic_Trading/sentiment_data.csv"
     
     max_words = 5000
     max_len = 100
-    embedding_dim = 300  
+    embedding_dim = 300
     batch_size = 32
     epochs = 10
     
@@ -102,6 +102,6 @@ if __name__ == "__main__":
 
     with open('tokenizer1.pkl', 'wb') as file:
         pickle.dump(tokenizer, file)
-
+    
     print("Training completed. Model saved as lstm.h5.")
     print("Tokenizer saved as tokenizer1.pkl.")
