@@ -5,6 +5,7 @@ import yfinance as yf
 import pytz
 import streamlit as st
 
+
 def get_target_price(ticker, target_date, target_time):
     try:
         target_datetime = datetime.strptime(
@@ -43,6 +44,7 @@ def get_target_price(ticker, target_date, target_time):
         print(f"Error in get_target_price: {str(e)}")
         return None, None
 
+
 def calculate_prediction_accuracy(predicted_price, actual_price):
     if predicted_price is None or actual_price is None:
         return None, None
@@ -51,6 +53,7 @@ def calculate_prediction_accuracy(predicted_price, actual_price):
     percentage_diff = (absolute_diff / actual_price) * 100
 
     return absolute_diff, percentage_diff
+
 
 def analyze_predictions():
     st.title("Stock Price Prediction Analysis")
@@ -116,10 +119,11 @@ def analyze_predictions():
                         predictions_df.at[idx, 'Actual Price'] = actual_price
                         predictions_df.at[idx, 'Actual Time'] = actual_time
                         predictions_df.at[idx, 'Price Difference'] = abs_diff
-                        predictions_df.at[idx,'Percentage Difference'] = pct_diff
+                        predictions_df.at[idx, 'Percentage Difference'] = pct_diff
                     else:
                         st.warning(
-                        f"Could not fetch target time price for {row['ticker']}")
+                            f"Could not fetch target time price for {row['ticker']}"
+                        )
                 except Exception as e:
                     st.error(f"Error processing {row['ticker']}: {str(e)}")
 
@@ -127,6 +131,7 @@ def analyze_predictions():
         status.empty()
 
     conn.close()
+
 
 if __name__ == "__main__":
     analyze_predictions()
