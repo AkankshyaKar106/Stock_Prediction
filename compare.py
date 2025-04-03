@@ -22,7 +22,8 @@ def get_target_price(ticker, target_date, target_time):
                     start=start_date, end=end_date, interval='1m')
 
                 if not hist.empty:
-                    hist_times = pd.to_datetime(hist.index).tz_convert('Asia/Kolkata')
+                    hist_times = pd.to_datetime(hist.index).tz_convert(
+                        'Asia/Kolkata')
                     closest_time_idx = (
                         abs(hist_times - target_datetime)).argmin()
                     closest_price = hist['Close'][closest_time_idx]
@@ -32,8 +33,8 @@ def get_target_price(ticker, target_date, target_time):
 
             except Exception as e:
                 print(
-                    f"Error fetching historical price for {ticker + suffix}: {str(e)}"
-                    )
+                f"Error fetching historical price for {ticker + suffix}: {str(e)}"
+                )
                 continue
 
         return None, None
@@ -60,7 +61,8 @@ def analyze_predictions():
         cursor.execute("DELETE FROM predictions")
         conn.commit()
         conn.close()
-        st.success("All previous predictions have been cleared from the database.")
+        st.success(
+            "All previous predictions have been cleared from the database.")
         return
 
     if st.button("Compare Predictions with Target Prices"):
@@ -102,8 +104,10 @@ def analyze_predictions():
                             st.write(f"Target Date: {row['target_date']}")
                             st.write(f"Target Time: {row['target_time']}")
                         with col2:
-                            st.write(f"Predicted Price: ₹{row['predicted_price']:.2f}")
-                            st.write(f"Price at Target Time: ₹{actual_price:.2f}")
+                            st.write(
+                                f"Predicted Price: ₹{row['predicted_price']:.2f}")
+                            st.write(
+                                f"Price at Target Time: ₹{actual_price:.2f}")
                         with col3:
                             st.write(f"Difference: ₹{abs_diff:.2f}")
                             st.write(f"% Difference: {pct_diff:.2f}%")
@@ -112,11 +116,10 @@ def analyze_predictions():
                         predictions_df.at[idx, 'Actual Price'] = actual_price
                         predictions_df.at[idx, 'Actual Time'] = actual_time
                         predictions_df.at[idx, 'Price Difference'] = abs_diff
-                        predictions_df.at[idx,
-                                          'Percentage Difference'] = pct_diff
+                        predictions_df.at[idx,'Percentage Difference'] = pct_diff
                     else:
                         st.warning(
-                            f"Could not fetch target time price for {row['ticker']}")
+                        f"Could not fetch target time price for {row['ticker']}")
                 except Exception as e:
                     st.error(f"Error processing {row['ticker']}: {str(e)}")
 
