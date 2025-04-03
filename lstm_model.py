@@ -1,10 +1,8 @@
-
 import numpy as np
 import pandas as pd
 import pickle
-import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, Embedding, Dropout, Bidirectional, BatchNormalization
+from tensorflow.keras.layers import LSTM, Dense, Embedding, Dropout
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.callbacks import ModelCheckpoint
@@ -81,14 +79,18 @@ if __name__ == "__main__":
     headlines = load_data(sentiment_data_path)
     x, tokenizer = preprocess_data(headlines, max_words, max_len)
     
-    embedding_matrix = load_glove_embeddings(glove_path, tokenizer, embedding_dim)
+    embedding_matrix = load_glove_embeddings(
+        glove_path, tokenizer, embedding_dim)
     
-    y = np.zeros(len(x))  
-    x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2, random_state=42)
+    y = np.zeros(len(x))
+    x_train, x_val, y_train, y_val = train_test_split(
+        x, y, test_size=0.2, random_state=42)
     
-    model = build_lstm_model(max_words, max_len, embedding_matrix, embedding_dim)
+    model = build_lstm_model(
+        max_words, max_len, embedding_matrix, embedding_dim)
     
-    checkpoint = ModelCheckpoint("lstm.h5", save_best_only=True, monitor='val_loss', mode='min')
+    checkpoint = ModelCheckpoint(
+        "lstm.h5", save_best_only=True, monitor='val_loss', mode='min')
     
     model.fit(
         x_train, y_train,
