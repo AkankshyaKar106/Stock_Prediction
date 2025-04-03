@@ -86,9 +86,6 @@ if __name__ == "__main__":
     headlines = load_data(sentiment_data_path)
     x, tokenizer = preprocess_data(headlines, max_words, max_len)
     
-    embedding_matrix = load_glove_embeddings(
-        glove_path, tokenizer, embedding_dim)
-    
     y = generate_sentiment_scores(headlines)
     
     x_train, x_val, y_train, y_val = train_test_split(
