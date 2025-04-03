@@ -87,19 +87,14 @@ if __name__ == "__main__":
     x, tokenizer = preprocess_data(headlines, max_words, max_len)
     
     y = generate_sentiment_scores(headlines)
-    
     x_train, x_val, y_train, y_val = train_test_split(
         x, y, test_size=0.2, random_state=42)
-    
     embedding_matrix = load_glove_embeddings(
         glove_path, tokenizer, embedding_dim)
-    
     model = build_lstm_model(
         max_words, max_len, embedding_matrix, embedding_dim)
-    
     checkpoint = ModelCheckpoint(
         "lstm.h5", save_best_only=True, monitor='val_loss', mode='min')
-    
     model.fit(
         x_train, y_train,
         validation_data=(x_val, y_val),
