@@ -16,7 +16,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check for changes
+      - name: Check for change
         run: |
           if git diff --name-only HEAD^ | grep -q .; then
             echo "Changes detected in dev branch. Running checks..."
