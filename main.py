@@ -10,8 +10,7 @@ import uvicorn
 
 from final_model import (
     load_lstm_model, load_rf_model, fetch_stock_data,
-    get_next_market_datetime, process_ticker_data
-)
+    get_next_market_datetime, process_ticker_data)
 
 # Import comparison functions
 from compare import get_target_price, calculate_prediction_accuracy
@@ -128,7 +127,7 @@ def predict_stock_price_endpoint(
             prediction_datetime = current_ist_time + timedelta(hours=1)
 
         adjusted_datetime, market_message = get_next_market_datetime(
-            prediction_datetime, prediction_option)   
+            prediction_datetime, prediction_option)
 
         batch_prediction_id = str(uuid.uuid4())
         all_prediction_data = []
@@ -141,7 +140,7 @@ def predict_stock_price_endpoint(
 
         for ticker in tickers:
             try:
-               
+
                 stock_data = fetch_stock_data(
                     ticker, adjusted_datetime.strftime('%Y-%m-%d'))
                 if stock_data is None or len(stock_data) == 0:
@@ -152,36 +151,39 @@ def predict_stock_price_endpoint(
                 prediction_data = process_ticker_data(
                     ticker, adjusted_datetime, prediction_created_at,
                     stock_data, lstm_model, tokenizer, rf_model, scaler,
-                    sentiment_scaler, target_scaler, prediction_option
-                )
+                    sentiment_scaler, target_scaler, prediction_option)
 
                 if prediction_data:
                     cursor.execute('''
-                        INSERT INTO predictions 
-                        (indices, ticker, prediction_type, prediction_created, 
-                         target_date, target_time, predicted_price, 
-                         signal, reason, sentiment_score) 
+                        INSERT INTO predictions
+                        (indices, ticker, prediction_type, prediction_created,
+                         target_date, target_time, predicted_price,
+                         signal, reason, sentiment_score)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ''', (
                         index, ticker, prediction_option,
                         prediction_created_at.strftime('%Y-%m-%d %H:%M:%S'),
                         prediction_data["Target Prediction Date"],
-                        prediction_data["Target Prediction Time"].replace(" IST", ""),
-                        float(prediction_data["Predicted Price"]),  # Ensure FLOAT
+                        prediction_data["Target Prediction Time"].replace(
+                            " IST", ""),
+                        float(prediction_data["Predicted Price"]),
                         prediction_data["Signal"],
                         prediction_data["Reason"],
-                        float(prediction_data["Sentiment Score"])  # Ensure FLOAT
+                        float(prediction_data["Sentiment Score"])
                     ))
 
                     conn.commit()
 
                     all_prediction_data.append(prediction_data)
                 else:
-                    failed_tickers.append({"ticker": ticker, "reason": "Processing failed to generate prediction data"})
+                    failed_tickers.append({
+                        "ticker": ticker, "reason": (
+                            "Processing failed to generate prediction data")})
 
             except Exception as e:
-               
-                failed_tickers.append({"ticker": ticker, "reason": f"Error: {str(e)}"})
+
+                failed_tickers.append(
+                    {"ticker": ticker, "reason": f"Error: {str(e)}"})
 
         conn.close()
 
@@ -192,20 +194,20 @@ def predict_stock_price_endpoint(
             }
 
         response = {
-        "batch_prediction_id": batch_prediction_id,
-        "predictions": [
-            {
-                "Ticker": pred["Ticker"],
-                "Target Prediction Date": pred["Target Prediction Date"],
-                "Target Prediction Time": pred["Target Prediction Time"],
-                "Predicted Price": float(pred["Predicted Price"]),  # Convert here
-                "Signal": pred["Signal"],
-                "Reason": pred["Reason"],
-                "Sentiment Score": float(pred["Sentiment Score"])  # Convert here
+            "batch_prediction_id": batch_prediction_id,
+            "predictions": [
+                {
+                    "Ticker": pred["Ticker"],
+                    "Target Prediction Date": pred["Target Prediction Date"],
+                    "Target Prediction Time": pred["Target Prediction Time"],
+                    "Predicted Price": float(pred["Predicted Price"]),
+                    "Signal": pred["Signal"],
+                    "Reason": pred["Reason"],
+                    "Sentiment Score": float(pred["Sentiment Score"])
+                    }
+                for pred in all_prediction_data
+                ]
             }
-            for pred in all_prediction_data
-            ]
-        }
 
         return response
         if failed_tickers:
@@ -214,7 +216,7 @@ def predict_stock_price_endpoint(
         return response
 
     except Exception as e:
-        
+ 
         return {"error": "Internal Server Error", "details": str(e)}
 
 
@@ -229,15 +231,15 @@ async def get_all_predictions():
 
         # ✅ Fill NaN values using forward and backward fill
         predictions_df = predictions_df.ffill().bfill().fillna(0)
-        
+
         # ✅ Ensure accuracy is displayed correctly
         if "accuracy" in predictions_df.columns:
             predictions_df["accuracy"] = 100 - predictions_df["accuracy"]
-            
-        # ✅ Fix: Recalculate if price_difference or percentage_difference is missing
+
         for idx, row in predictions_df.iterrows():
             if row["actual_price"] and row["predicted_price"]:
-                abs_diff, pct_diff = calculate_prediction_accuracy(row["predicted_price"], row["actual_price"])
+                abs_diff, pct_diff = calculate_prediction_accuracy(
+                    row["predicted_price"], row["actual_price"])
                 predictions_df.at[idx, "price_difference"] = abs_diff
                 predictions_df.at[idx, "percentage_difference"] = pct_diff
 
@@ -248,29 +250,31 @@ async def get_all_predictions():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
         
 @app.get("/predictions/analyze")
 async def analyze_stock_predictions():
     """Analyze stock predictions by comparing them with actual prices"""
-    print("🔍 Fetching predictions where actual_price is NULL or 0 and target_time has passed...")
+    print("🔍 Fetching predictions where actual_price is NULL or 0"
+          "and target_time has passed...")
 
     try:
         conn = sqlite3.connect(DATABASE_URL)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        
+
         print("🔍 Fetching updated predictions after analysis...")
 
         # ✅ Fix: Handle NULL values and ensure correct time comparison
         query = '''
-            SELECT id, ticker, prediction_type, prediction_created, target_date, target_time, 
-                   predicted_price, signal, reason, sentiment_score, actual_price, accuracy, 
-                   status, indices
-            FROM predictions 
-            WHERE (actual_price IS NULL OR actual_price = 0)  -- Handle NULL values
-            AND STRFTIME('%Y-%m-%d %H:%M:%S', target_date || ' ' || 
-                SUBSTR(target_time || ':00', 1, 8)) < STRFTIME('%Y-%m-%d %H:%M:%S', 'now', 'localtime');
+            SELECT id, ticker, prediction_type, prediction_created,
+            target_date, target_time, predicted_price, signal, reason,
+            sentiment_score, actual_price, accuracy, status, indices
+            FROM predictions
+            WHERE (actual_price IS NULL OR actual_price = 0)
+            -- Handle NULL values
+            AND STRFTIME('%Y-%m-%d %H:%M:%S', target_date || ' ' ||
+                SUBSTR(target_time || ':00', 1, 8)) < STRFTIME(
+                    '%Y-%m-%d %H:%M:%S', 'now', 'localtime');
         '''
         print("SQL Query:\n", query)
 
@@ -287,19 +291,21 @@ async def analyze_stock_predictions():
             pred_dict = dict(pred)  # ✅ Convert row to dictionary
 
             pred_id = pred_dict["id"]
-            indices = pred_dict["indices"]
             ticker = pred_dict["ticker"]
             target_date = pred_dict["target_date"]
             target_time = pred_dict["target_time"]
             predicted_price = pred_dict["predicted_price"]
-        
+
             # ✅ Ensure time format is always HH:MM:SS
-            formatted_time = target_time if len(target_time) == 8 else f"{target_time}:00"
-        
-            print(f"📌 Processing {ticker} | Target: {target_date} {formatted_time}")
-        
+            formatted_time = target_time if len(
+                target_time) == 8 else f"{target_time}:00"
+
+            print(f"📌 Processing {ticker} | Target: {target_date}"
+                  f"{formatted_time}")
+
             # Fetch actual price with corrected format
-            actual_price, actual_time = get_target_price(ticker, target_date, formatted_time)
+            actual_price, actual_time = get_target_price(
+                ticker, target_date, formatted_time)
 
             if actual_price is not None:
                 abs_diff, pct_diff = calculate_prediction_accuracy(
@@ -307,8 +313,9 @@ async def analyze_stock_predictions():
 
                 print(
                     f"✅ Actual Price: {actual_price} at {actual_time}")
-                print(f"📊 Price Difference: {abs_diff} | % Difference: {pct_diff}%")
-    
+                print(f"📊 Price Difference: {abs_diff} |"
+                      f" % Difference: {pct_diff}%")
+
                 cursor.execute('''
                     UPDATE predictions
                     SET actual_price = ?,
@@ -318,7 +325,7 @@ async def analyze_stock_predictions():
                         status = 'completed'
                     WHERE id = ?
                 ''', (
-                actual_price, abs_diff, pct_diff, 100 - pct_diff, pred_id))
+                    actual_price, abs_diff, pct_diff, 100 - pct_diff, pred_id))
 
                 conn.commit()
 
@@ -341,7 +348,7 @@ async def analyze_stock_predictions():
         cursor.execute('''
             SELECT id, indices, ticker, target_date, target_time,
             predicted_price, actual_price, price_difference,
-            percentage_difference, accuracy, status 
+            percentage_difference, accuracy, status
             FROM predictions
             WHERE actual_price IS NOT NULL;
         ''')
@@ -351,7 +358,7 @@ async def analyze_stock_predictions():
         conn.close()
         print(f"📊 Final Updated Predictions: {updated_predictions}")
 
-        return {"results": updated_predictions}  # ✅ Return updated predictions
+        return {"results": updated_predictions}
 
     except Exception as e:
         print(f"❌ Error in analyze_stock_predictions: {str(e)}")
