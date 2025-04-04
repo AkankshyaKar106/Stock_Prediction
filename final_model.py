@@ -401,14 +401,15 @@ def calculate_difference_and_signal(
             signal = "Hold"
 
         # Define these variables before the reasons list
-        rsi_status = 'oversold' if rsi < 30 else 'overbought' if rsi > 70 else 'neutral'
+        rsi_status = ('oversold' if rsi < 30 
+                      else 'overbought' if rsi > 70 else 'neutral')
         volume_diff = (volume / avg_volume * 100 - 100)
-        
+
         reasons = [
             f"Predicted price movement: {pred_change:.2f}%",
-            f"RSI: {rsi:.1f} ({rsi_status})",  # Use the variable defined below
+            f"RSI: {rsi:.1f} ({rsi_status})",
             f"MACD: {'bullish' if macd > macd_signal else 'bearish'} trend",
-            f"Volume: {volume_diff:.1f}% compared to average"  # Use the variable defined below
+            f"Volume: {volume_diff:.1f}% compared to average"
         ]
 
         analysis = " | ".join(reasons)
@@ -858,7 +859,7 @@ def predict_stock_price():
             lstm_model, tokenizer = load_lstm_model()
             rf_model, scaler, target_scaler, sentiment_scaler = load_rf_model()
 
-            if (lstm_model is None or rf_model is None or 
+            if (lstm_model is None or rf_model is None or
                     tokenizer is None or scaler is None):
                 st.error("Failed to load models or tokenizer")
                 return
@@ -934,8 +935,9 @@ def predict_stock_price():
 
             st.write("Summary of Predictions:")
             st.dataframe(prediction_df)
-            
-            datetime_str = prediction_created_at.strftime('%Y-%m-%d %H:%M:%S IST')
+
+            datetime_fmt = '%Y-%m-%d %H:%M:%S IST'
+            datetime_str = prediction_created_at.strftime(datetime_fmt)
             st.write(f"Predictions generated at: {datetime_str}")
 
 
