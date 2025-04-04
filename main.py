@@ -37,8 +37,8 @@ class PredictionRequest(BaseModel):
     Indices: str
     Ticker: str
     Prediction_Type: str
-    Prediction_Created: datetime = Field(...,
-                                         description="Format: 'YYYY-MM-DD HH:MM:SS'")
+    Prediction_Created: datetime = Field(
+        ..., description="Format: 'YYYY-MM-DD HH:MM:SS'")
     Target_Prediction_Date: date = Field(...,
                                          description="Format: 'YYYY-MM-DD'")
     Target_Prediction_Time: time = Field(..., description="Format: 'HH:MM'")
@@ -107,8 +107,8 @@ def predict_stock_price_endpoint(
     index: str = Query(...,
                        enum=["BSE Sensex (^BSESN)", "NSE Nifty 500 (^NSEI)"]),
     tickers: list[str] = Query(...),
-    prediction_option: str = Query(...,
-                                   enum=["Next Hour", "Next Day", "Custom Time"]),
+    prediction_option: str = Query(
+        ..., enum=["Next Hour", "Next Day", "Custom Time"]),
     prediction_date: str = None,
     prediction_time: str = None
 ):
@@ -120,7 +120,8 @@ def predict_stock_price_endpoint(
             if not prediction_date or not prediction_time:
                 return {"error": "Custom time requires both date and time."}
             prediction_datetime = ist_timezone.localize(
-                datetime.strptime(f"{prediction_date} {prediction_time}", "%Y-%m-%d %H:%M"))
+                datetime.strptime(
+                    f"{prediction_date} {prediction_time}", "%Y-%m-%d %H:%M"))
         elif prediction_option == "Next Day":
             prediction_datetime = current_ist_time + timedelta(days=1)
         else:
@@ -149,9 +150,9 @@ def predict_stock_price_endpoint(
                     continue
 
                 prediction_data = process_ticker_data(
-                    ticker, adjusted_datetime, prediction_created_at, stock_data,
-                    lstm_model, tokenizer, rf_model, scaler, sentiment_scaler, target_scaler,
-                    prediction_option
+                    ticker, adjusted_datetime, prediction_created_at,
+                    stock_data, lstm_model, tokenizer, rf_model, scaler,
+                    sentiment_scaler, target_scaler, prediction_option
                 )
 
                 if prediction_data:
@@ -299,25 +300,28 @@ async def analyze_stock_predictions():
         
             # Fetch actual price with corrected format
             actual_price, actual_time = get_target_price(ticker, target_date, formatted_time)
-        
+
             if actual_price is not None:
-                abs_diff, pct_diff = calculate_prediction_accuracy(predicted_price, actual_price)
-        
-                print(f"✅ Actual Price: {actual_price} at {actual_time}")
+                abs_diff, pct_diff = calculate_prediction_accuracy(
+                    predicted_price, actual_price)
+
+                print(
+                    f"✅ Actual Price: {actual_price} at {actual_time}")
                 print(f"📊 Price Difference: {abs_diff} | % Difference: {pct_diff}%")
-        
+    
                 cursor.execute('''
-                    UPDATE predictions 
+                    UPDATE predictions
                     SET actual_price = ?,
                         price_difference = ?,
                         percentage_difference = ?,
-                        accuracy = ?, 
+                        accuracy = ?,
                         status = 'completed'
                     WHERE id = ?
-                ''', (actual_price, abs_diff, pct_diff, 100 - pct_diff, pred_id))
+                ''', (
+                actual_price, abs_diff, pct_diff, 100 - pct_diff, pred_id))
 
                 conn.commit()
-                
+
                 # ✅ Add updated values to response
                 pred_dict.update({
                     "actual_price": actual_price,
@@ -326,17 +330,18 @@ async def analyze_stock_predictions():
                     "accuracy": 100 - pct_diff,
                     "status": "completed"
                 })
-                
+
                 results.append(pred_dict)
-                
+
             else:
                 print(f"⚠️ Could not fetch actual price for {ticker}")
 
         # ✅ **Re-fetch updated predictions**
         print("🔄 Fetching predictions after updates...")
         cursor.execute('''
-            SELECT id, indices, ticker, target_date, target_time, predicted_price, actual_price,
-                   price_difference, percentage_difference, accuracy, status 
+            SELECT id, indices, ticker, target_date, target_time,
+            predicted_price, actual_price, price_difference,
+            percentage_difference, accuracy, status 
             FROM predictions
             WHERE actual_price IS NOT NULL;
         ''')
@@ -362,7 +367,7 @@ async def clear_predictions():
         cursor.execute("DELETE FROM predictions")
         conn.commit()
         conn.close()
-        
+
         return {"message": "All predictions cleared successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
