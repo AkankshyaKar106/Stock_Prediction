@@ -46,7 +46,7 @@ def load_glove_embeddings(glove_path, tokenizer, embedding_dim=300):
                 embeddings_index[word] = coefs
             except ValueError:
                 print(f"Skipping line: {line}")
- 
+
             for word, i in tokenizer.word_index.items():
                 embedding_vector = embeddings_index.get(word)
                 if embedding_vector is not None:
