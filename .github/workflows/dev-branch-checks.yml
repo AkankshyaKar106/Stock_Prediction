@@ -44,7 +44,7 @@ jobs:
 
       - name: Verify FastAPI App
         run: |
-          uvicorn api:app --host 127.0.0.1 --port 8000 --reload &
+          uvicorn api:app --host 127.0.0.1 --port 8002 --reload &
           sleep 5
-          curl -f http://127.0.0.1:8000/docs || (echo "FastAPI server failed to start" && exit 1)
+          curl -f http://127.0.0.1:8002/docs || (echo "FastAPI server failed to start" && exit 1)
           echo "FastAPI app is running successfully."
