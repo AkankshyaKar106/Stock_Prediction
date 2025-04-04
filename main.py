@@ -250,7 +250,7 @@ async def get_all_predictions():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-   
+
 @app.get("/predictions/analyze")
 async def analyze_stock_predictions():
     """Analyze stock predictions by comparing them with actual prices"""
