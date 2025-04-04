@@ -400,11 +400,15 @@ def calculate_difference_and_signal(
         else:
             signal = "Hold"
 
+        # Define these variables before the reasons list
+        rsi_status = 'oversold' if rsi < 30 else 'overbought' if rsi > 70 else 'neutral'
+        volume_diff = (volume / avg_volume * 100 - 100)
+        
         reasons = [
             f"Predicted price movement: {pred_change:.2f}%",
-            f"RSI: {rsi:.1f} ({'oversold' if rsi < 30 else 'overbought' if rsi > 70 else 'neutral'})",
+            f"RSI: {rsi:.1f} ({rsi_status})",  # Use the variable defined below
             f"MACD: {'bullish' if macd > macd_signal else 'bearish'} trend",
-            f"Volume: {(volume / avg_volume * 100 - 100):.1f}% compared to average"
+            f"Volume: {volume_diff:.1f}% compared to average"  # Use the variable defined below
         ]
 
         analysis = " | ".join(reasons)
