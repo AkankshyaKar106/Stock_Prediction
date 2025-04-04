@@ -35,9 +35,9 @@ def load_glove_embeddings(glove_path, tokenizer, embedding_dim=300):
     embeddings_index = {}
 
     embedding_matrix = np.zeros((len(tokenizer.word_index) + 1, embedding_dim))
- 
+
     with open(glove_path, 'r', encoding='utf-8') as f:
-  
+
         for line in f:
             values = line.strip().split()
             word = values[0]
@@ -68,13 +68,13 @@ def build_lstm_model(max_words, max_len, embedding_matrix, embedding_dim=300):
         Dropout(0.2),
         Dense(1, activation='linear')
     ])
-    
+
     model.compile(optimizer='adam', loss='mse', metrics=['mae'])
     return model
 
 
 if __name__ == "__main__":
-    
+
     glove_path = "D:/Qwegle/Qwegle/Algorithmic_Trading/glove.840B.300d.txt"
     sentiment_data_path = (
         "D:/Qwegle/Qwegle/Algorithmic_Trading/sentiment_data.csv")
