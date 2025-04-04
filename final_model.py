@@ -401,7 +401,7 @@ def calculate_difference_and_signal(
             signal = "Hold"
 
         # Define these variables before the reasons list
-        rsi_status = ('oversold' if rsi < 30 
+        rsi_status = ('oversold' if rsi < 30
                       else 'overbought' if rsi > 70 else 'neutral')
         volume_diff = (volume / avg_volume * 100 - 100)
 
