@@ -129,9 +129,10 @@ def predict_next_day(
     reason = f"Predicted price ({predicted_price:.2f})"
     f"{'higher' if signal == 'BUY' else 'lower'} than today's price"
     f"({today_price:.2f})" if today_price else "Insufficient data"
-    prediction_date=(datetime.today() + timedelta(days=1)).strftime('%Y-%m-%d')
+    prediction_date = (datetime.today() + timedelta(days=1)).strftime(
+        '%Y-%m-%d')
 
-    return pd.DataFrame([{ 
+    return pd.DataFrame([{
         "Ticker": ticker,
         "Prediction Date": prediction_date,
         "Predicted Price": round(predicted_price, 2),
@@ -155,7 +156,8 @@ def predict_next_hour(
         [latest_data_scaled, latest_data_sentiment_scaled])
 
     predicted_price = rf_model.predict(latest_data_scaled)[0]
-    predicted_price=target_scaler.inverse_transform([[predicted_price]])[0][0]
+    predicted_price = target_scaler.inverse_transform(
+        [[predicted_price]])[0][0]
 
     current_price = latest_data["Close"].iloc[-1]
     signal = ("BUY" if predicted_price > current_price else "SELL"
@@ -166,7 +168,7 @@ def predict_next_hour(
     prediction_time = (datetime.now() + timedelta(hours=1)).strftime(
         '%Y-%m-%d %H:%M:%S')
 
-    return pd.DataFrame([{ 
+    return pd.DataFrame([{
         "Ticker": ticker,
         "Prediction Time": prediction_time,
         "Predicted Price": round(predicted_price, 2),
