@@ -51,6 +51,21 @@ jobs:
           echo "/usr/local/lib" | sudo tee -a /etc/ld.so.conf.d/ta-lib.conf
           sudo ldconfig
 
+      - name: Install TA-Lib Python wrapper manually (to avoid _ta_lib.c error)
+        if: steps.check_changes.outputs.skip_checks != 'true'
+        run: |
+          export CFLAGS="-I/usr/local/include"
+          export LDFLAGS="-L/usr/local/lib"
+          export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
+          export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
+      
+          python -m pip install --upgrade pip
+          pip install Cython
+          git clone https://github.com/mrjbq7/ta-lib.git
+          cd ta-lib
+          python setup.py build_ext --inplace
+          python setup.py install
+
       - name: Debug TA-Lib Installation
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
@@ -68,9 +83,8 @@ jobs:
           export LDFLAGS="-L/usr/local/lib"
           export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
           export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
-
+      
           python -m pip install --upgrade pip
-          pip install --no-cache-dir ta-lib
           pip install -r requirements.txt
           python -c "import talib; print('✅ TA-Lib successfully imported!')"
 
