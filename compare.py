@@ -5,26 +5,26 @@ import yfinance as yf
 import pytz
 import streamlit as st
 
+
 def get_target_price(ticker, target_date, target_time):
     try:
-        target_datetime = datetime.strptime(f"{target_date} {target_time}", '%Y-%m-%d %H:%M:%S')
+        target_datetime = datetime.strptime(
+            f"{target_date} {target_time}", '%Y-%m-%d %H:%M:%S')
 
         ist = pytz.timezone('Asia/Kolkata')
         target_datetime = ist.localize(target_datetime)
-
         start_date = target_datetime.date()
         end_date = start_date + timedelta(days=1)
 
         for suffix in ['.NS', '.BO', '']:
             try:
                 stock = yf.Ticker(ticker + suffix)
-
                 hist = stock.history(
                     start=start_date, end=end_date, interval='1m')
 
                 if not hist.empty:
-                    hist_times = pd.to_datetime(
-                        hist.index).tz_convert('Asia/Kolkata')
+                    hist_times = pd.to_datetime(hist.index).tz_convert(
+                        'Asia/Kolkata')
                     closest_time_idx = (
                         abs(hist_times - target_datetime)).argmin()
                     closest_price = hist['Close'][closest_time_idx]
@@ -34,7 +34,9 @@ def get_target_price(ticker, target_date, target_time):
 
             except Exception as e:
                 print(
-                    f"Error fetching historical price for {ticker + suffix}: {str(e)}")
+                    f"Error fetching historical price for {ticker + suffix}: "
+                    f"{str(e)}"
+                )
                 continue
 
         return None, None
@@ -42,6 +44,7 @@ def get_target_price(ticker, target_date, target_time):
     except Exception as e:
         print(f"Error in get_target_price: {str(e)}")
         return None, None
+
 
 def calculate_prediction_accuracy(predicted_price, actual_price):
     if predicted_price is None or actual_price is None:
@@ -52,9 +55,9 @@ def calculate_prediction_accuracy(predicted_price, actual_price):
 
     return absolute_diff, percentage_diff
 
+
 def analyze_predictions():
     st.title("Stock Price Prediction Analysis")
-
     conn = sqlite3.connect('stock_predictions.db')
 
     if st.button("Clear All Predictions"):
@@ -93,10 +96,7 @@ def analyze_predictions():
 
                 try:
                     actual_price, actual_time = get_target_price(
-                        row['ticker'],
-                        row['target_date'],
-                        row['target_time']
-                    )
+                        row['ticker'], row['target_date'], row['target_time'])
 
                     if actual_price is not None:
                         abs_diff, pct_diff = calculate_prediction_accuracy(
@@ -109,7 +109,8 @@ def analyze_predictions():
                             st.write(f"Target Time: {row['target_time']}")
                         with col2:
                             st.write(
-                                f"Predicted Price: ₹{row['predicted_price']:.2f}")
+                                f"Predicted Price: "
+                                f"₹{row['predicted_price']:.2f}")
                             st.write(
                                 f"Price at Target Time: ₹{actual_price:.2f}")
                         with col3:
@@ -120,11 +121,13 @@ def analyze_predictions():
                         predictions_df.at[idx, 'Actual Price'] = actual_price
                         predictions_df.at[idx, 'Actual Time'] = actual_time
                         predictions_df.at[idx, 'Price Difference'] = abs_diff
-                        predictions_df.at[idx,
-                                          'Percentage Difference'] = pct_diff
+                        predictions_df.at[
+                            idx, 'Percentage Difference'] = pct_diff
                     else:
                         st.warning(
-                            f"Could not fetch target time price for {row['ticker']}")
+                            f"Could not fetch target time price for "
+                            f"{row['ticker']}"
+                        )
                 except Exception as e:
                     st.error(f"Error processing {row['ticker']}: {str(e)}")
 
@@ -132,6 +135,7 @@ def analyze_predictions():
         status.empty()
 
     conn.close()
+
 
 if __name__ == "__main__":
     analyze_predictions()
