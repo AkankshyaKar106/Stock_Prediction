@@ -19,7 +19,7 @@ jobs:
       - name: Check for changes
         id: check_changes
         run: |
-          git fetch --deepen=2
+          git fetch --unshallow
           if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q .; then
             echo "Changes detected"
             echo "skip_checks=false" >> $GITHUB_OUTPUT
