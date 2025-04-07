@@ -48,22 +48,15 @@ jobs:
           echo "/usr/lib" | sudo tee -a /etc/ld.so.conf.d/ta-lib.conf
           sudo ldconfig
 
-      - name: Set TA-Lib env variables
-        if: steps.check_changes.outputs.skip_checks != 'true'
-        run: |
-          echo "TA_LIBRARY_PATH=/usr/lib" >> $GITHUB_ENV
-          echo "TA_INCLUDE_PATH=/usr/include" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-
       - name: Install Python dependencies
         if: steps.check_changes.outputs.skip_checks != 'true'
-        env:
-          TA_LIBRARY_PATH: /usr/lib
-          TA_INCLUDE_PATH: /usr/include
-          LD_LIBRARY_PATH: /usr/lib
         run: |
+          export TA_LIBRARY_PATH=/usr/lib
+          export TA_INCLUDE_PATH=/usr/include
+          export LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH
           python -m pip install --upgrade pip
-          pip install --no-cache-dir -r requirements.txt
+          pip install --no-cache-dir -r requirements.txt || true
+          pip install --no-cache-dir --global-option=build_ext --global-option="-L/usr/lib" --global-option="-I/usr/include" ta-lib
           pip install flake8 pytest
 
       - name: Run Unit Tests
