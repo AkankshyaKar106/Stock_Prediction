@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(
 
 from compare import analyze_predictions  # noqa: E402
 
+
 class TestAnalyzePredictions(unittest.TestCase):
 
     @patch('compare.st')
