@@ -32,7 +32,7 @@ jobs:
         if: steps.check_changes.outputs.skip_checks != 'true'
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.11.7'
 
       - name: Install TA-Lib
         if: steps.check_changes.outputs.skip_checks != 'true'
