@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 import pandas as pd
 
-from your_module import analyze_predictions  # Replace with actual module
+from compare import analyze_predictions  # Replace with actual module
 
 class TestAnalyzePredictions(unittest.TestCase):
 
