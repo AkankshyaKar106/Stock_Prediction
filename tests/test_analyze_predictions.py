@@ -6,7 +6,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(
     __file__), '..')))
 
-from compare import analyze_predictions  # Replace with actual module
+from compare import analyze_predictions
 
 
 class TestAnalyzePredictions(unittest.TestCase):
