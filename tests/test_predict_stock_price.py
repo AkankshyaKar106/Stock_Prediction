@@ -4,9 +4,10 @@ from datetime import datetime, timedelta
 import pytz
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(
+    __file__), '..')))
 
-from final_model import predict_stock_price  # Replace with actual module
+from final_model import predict_stock_price
 
 
 class TestPredictStockPrice(unittest.TestCase):
