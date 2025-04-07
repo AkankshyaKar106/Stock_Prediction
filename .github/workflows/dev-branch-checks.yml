@@ -19,7 +19,7 @@ jobs:
       - name: Check for changes
         id: check_changes
         run: |
-          git fetch --unshallow
+          git fetch --unshallow || true
           if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q .; then
             echo "Changes detected"
             echo "skip_checks=false" >> $GITHUB_OUTPUT
@@ -37,11 +37,9 @@ jobs:
       - name: Install TA-Lib
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
-          # Install prerequisites
           sudo apt-get update
           sudo apt-get install -y build-essential wget
 
-          # Download and install TA-Lib
           wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
           tar -xzf ta-lib-0.4.0-src.tar.gz
           cd ta-lib/
@@ -49,37 +47,25 @@ jobs:
           make
           sudo make install
 
-          # Important - verify installation
-          ls -la /usr/lib/libta* || echo "No libraries found in /usr/lib"
-
-          # Create symbolic link to ensure correct library name
+          # Create symlink for expected library name
           if [ -f /usr/lib/libta_lib.so.0 ] && [ ! -f /usr/lib/libta_lib.so ]; then
             sudo ln -s /usr/lib/libta_lib.so.0 /usr/lib/libta_lib.so
           fi
 
-          # Make sure libraries are properly registered
           sudo ldconfig
 
-          # Check if the library is properly registered
-          ldconfig -p | grep libta || echo "Library not registered with ldconfig"
-          # Make sure libraries are properly registered
-          sudo ldconfig
-
-          # Check if the library is properly registered
-          ldconfig -p | grep libta || echo "Library not registered with ldconfig"
-
-      - name: Install Python packages
+      - name: Install Python packages (with TA-Lib env)
         if: steps.check_changes.outputs.skip_checks != 'true'
+        env:
+          TA_INCLUDE_PATH: /usr/include
+          TA_LIBRARY_PATH: /usr/lib
+          CFLAGS: -I/usr/include
+          LDFLAGS: -L/usr/lib
         run: |
           python -m pip install --upgrade pip
-          
-          # Install all dependencies from requirements.txt
-          # The TA-Lib Python wrapper will build against the C library we just installed
           pip install -r requirements.txt
-          
-          # Verify installation
-          python -c "import talib; print('TA-Lib successfully imported!')"
-          
+          python -c "import talib; print('✅ TA-Lib successfully imported!')"
+
       - name: Run Flake8 Linting
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
