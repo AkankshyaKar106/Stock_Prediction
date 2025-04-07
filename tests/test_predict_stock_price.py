@@ -3,12 +3,12 @@ from unittest.mock import patch, MagicMock
 from datetime import datetime, timedelta
 import pytz
 
-import streamlit as st
 from final_model import predict_stock_price  # Replace with actual module
+
 
 class TestPredictStockPrice(unittest.TestCase):
 
-    @patch('final_model.st')  # Replace with the module where the function lives
+    @patch('final_model.st')
     @patch('final_model.fetch_bse_sensex_tickers')
     @patch('final_model.fetch_stock_data')
     @patch('final_model.process_ticker_data')
@@ -16,7 +16,8 @@ class TestPredictStockPrice(unittest.TestCase):
     @patch('final_model.load_rf_model')
     @patch('final_model.save_prediction')
     @patch('final_model.get_next_market_datetime')
-    def test_predict_stock_price_next_hour(self, mock_market_dt, mock_save, mock_rf, mock_lstm, mock_process, mock_fetch_data, mock_fetch_tickers, mock_st):
+    def test_predict_stock_price_next_hour(self, mock_market_dt, mock_save, mock_rf,
+                                           mock_lstm, mock_process, mock_fetch_data, mock_fetch_tickers, mock_st):
         # Setup timezone
         ist_timezone = pytz.timezone('Asia/Kolkata')
         current_ist_time = datetime.now(ist_timezone)
@@ -42,8 +43,10 @@ class TestPredictStockPrice(unittest.TestCase):
             "Sentiment Score": 0.75,
         }
         mock_lstm.return_value = (MagicMock(), MagicMock())
-        mock_rf.return_value = (MagicMock(), MagicMock(), MagicMock(), MagicMock())
-        mock_market_dt.return_value = (current_ist_time + timedelta(hours=1), "")
+        mock_rf.return_value = (MagicMock(), MagicMock(), MagicMock(),
+                                MagicMock())
+        mock_market_dt.return_value = (current_ist_time +
+                                       timedelta(hours=1), "")
 
         predict_stock_price()
 
