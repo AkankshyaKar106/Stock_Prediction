@@ -40,6 +40,13 @@ jobs:
           ./configure --prefix=/usr
           make
           sudo make install
+          echo "/usr/lib" | sudo tee -a /etc/ld.so.conf.d/ta-lib.conf
+          sudo ldconfig
+
+      - name: Set TA-Lib environment variables
+        run: |
+          echo "TA_LIBRARY_PATH=/usr/lib" >> $GITHUB_ENV
+          echo "TA_INCLUDE_PATH=/usr/include" >> $GITHUB_ENV
 
       - name: Install Python dependencies
         run: |
@@ -47,6 +54,9 @@ jobs:
           pip install -r requirements.txt
           pip install flake8 pytest
 
+      - name: Test TA-Lib Import (Optional)
+        run: |
+          python -c "import talib; print('TA-Lib installed. Functions:', talib.get_functions()[:5])"
       - name: Run Unit Tests
         run: |
           pytest tests/ --maxfail=5 --disable-warnings
