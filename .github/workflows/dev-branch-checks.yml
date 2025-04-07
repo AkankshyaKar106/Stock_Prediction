@@ -30,7 +30,7 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install TA-Lib from source
+      -  name: Install TA-Lib C library
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential wget
@@ -43,20 +43,21 @@ jobs:
           echo "/usr/lib" | sudo tee -a /etc/ld.so.conf.d/ta-lib.conf
           sudo ldconfig
 
-      - name: Set TA-Lib environment variables
+      - name: Set TA-Lib env variables
         run: |
           echo "TA_LIBRARY_PATH=/usr/lib" >> $GITHUB_ENV
           echo "TA_INCLUDE_PATH=/usr/include" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
       - name: Install Python dependencies
+        env:
+          TA_LIBRARY_PATH: /usr/lib
+          TA_INCLUDE_PATH: /usr/include
+          LD_LIBRARY_PATH: /usr/lib
         run: |
           pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install --no-cache-dir -r requirements.txt
           pip install flake8 pytest
-
-      - name: Test TA-Lib Import (Optional)
-        run: |
-          python -c "import talib; print('TA-Lib installed. Functions:', talib.get_functions()[:5])"
       - name: Run Unit Tests
         run: |
           pytest tests/ --maxfail=5 --disable-warnings
