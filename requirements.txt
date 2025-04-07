@@ -1,0 +1,16 @@
+numpy
+pandas
+scikit-learn
+tensorflow
+keras
+yfinance
+requests
+beautifulsoup4
+vaderSentiment
+fastapi
+uvicorn
+pydantic
+streamlit
+ta-lib
+pytz
+gdown
