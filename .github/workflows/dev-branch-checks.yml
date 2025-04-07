@@ -50,16 +50,15 @@ jobs:
           # Ensure library path is known
           echo "/usr/local/lib" | sudo tee -a /etc/ld.so.conf.d/ta-lib.conf
           sudo ldconfig
-
-      - name: Install Python packages
-        if: steps.check_changes.outputs.skip_checks != 'true'
-        run: |
-          export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
       
+      - name: Install Python packages (with TA-Lib env)
+        if: steps.check_changes.outputs.skip_checks != 'true'
+        env:
+          CFLAGS: -I/usr/local/include
+          LDFLAGS: -L/usr/local/lib
+        run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      
-          # Verify installation
           python -c "import talib; print('✅ TA-Lib successfully imported!')"
 
       - name: Run Flake8 Linting
