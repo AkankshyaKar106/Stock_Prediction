@@ -50,15 +50,27 @@ jobs:
           # Ensure library path is known
           echo "/usr/local/lib" | sudo tee -a /etc/ld.so.conf.d/ta-lib.conf
           sudo ldconfig
+
+      - name: Debug TA-Lib Installation
+        if: steps.check_changes.outputs.skip_checks != 'true'
+        run: |
+          echo "==> Checking include path"
+          ls -l /usr/local/include/ta-lib || echo "❌ Missing header files"
+
+          echo "==> Checking lib path"
+          ls -l /usr/local/lib/libta_lib.* || echo "❌ Missing TA-Lib binaries"
+
       
       - name: Install Python packages (with TA-Lib env)
         if: steps.check_changes.outputs.skip_checks != 'true'
-        env:
-          CFLAGS: -I/usr/local/include
-          LDFLAGS: -L/usr/local/lib
         run: |
+          export CFLAGS="-I/usr/local/include"
+          export LDFLAGS="-L/usr/local/lib"
+          export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
+          export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
+
           python -m pip install --upgrade pip
-          pip install ta-lib
+          pip install --no-cache-dir ta-lib
           pip install -r requirements.txt
           python -c "import talib; print('✅ TA-Lib successfully imported!')"
 
