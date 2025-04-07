@@ -40,7 +40,7 @@ jobs:
           # Install prerequisites
           sudo apt-get update
           sudo apt-get install -y build-essential wget
-      
+
           # Download and install TA-Lib
           wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
           tar -xzf ta-lib-0.4.0-src.tar.gz
@@ -48,35 +48,35 @@ jobs:
           ./configure --prefix=/usr
           make
           sudo make install
-          
+
           # Important - verify installation
           ls -la /usr/lib/libta* || echo "No libraries found in /usr/lib"
-          
+
           # Create symbolic link to ensure correct library name
           if [ -f /usr/lib/libta_lib.so.0 ] && [ ! -f /usr/lib/libta_lib.so ]; then
             sudo ln -s /usr/lib/libta_lib.so.0 /usr/lib/libta_lib.so
           fi
-          
+
           # Make sure libraries are properly registered
           sudo ldconfig
-          
+
           # Check if the library is properly registered
           ldconfig -p | grep libta || echo "Library not registered with ldconfig"
-      
+
       - name: Install Python packages
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
           python -m pip install --upgrade pip
           
-          # Install TA-Lib from wheel (most reliable method)
-          pip install --no-cache-dir https://files.pythonhosted.org/packages/c0/58/64f1e01ba00b420ee1bb80e3c8dd0be8c853ea4ef22e5da90beb2db9a23e/TA_Lib-0.4.24-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+          # Install TA-Lib Python wrapper using pip with the C library already installed
+          pip install TA-Lib
           
           # Install other dependencies
           pip install -r requirements.txt || pip install $(grep -v "^ta-lib" requirements.txt)
           
           # Verify installation
           python -c "import talib; print('TA-Lib successfully imported!')"
-          
+
       - name: Run Flake8 Linting
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
