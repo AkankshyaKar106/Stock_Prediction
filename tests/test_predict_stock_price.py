@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import pytz
 
 import streamlit as st
-from your_module import predict_stock_price  # Replace with actual module
+from final_model import predict_stock_price  # Replace with actual module
 
 class TestPredictStockPrice(unittest.TestCase):
 
