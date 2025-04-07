@@ -18,7 +18,8 @@ class TestPredictStockPrice(unittest.TestCase):
     @patch('final_model.get_next_market_datetime')
     def test_predict_stock_price_next_hour(self, mock_market_dt, mock_save,
                                            mock_rf, mock_lstm, mock_process,
-                                           mock_fetch_data, mock_fetch_tickers, mock_st):
+                                           mock_fetch_data, mock_fetch_tickers,
+                                           mock_st):
         # Setup timezone
         ist_timezone = pytz.timezone('Asia/Kolkata')
         current_ist_time = datetime.now(ist_timezone)
