@@ -39,15 +39,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential wget
-      
+
           wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
           tar -xzf ta-lib-0.4.0-src.tar.gz
           cd ta-lib/
           ./configure --prefix=/usr/local
           make
           sudo make install
-      
-          # Ensure library path is known
+
           echo "/usr/local/lib" | sudo tee -a /etc/ld.so.conf.d/ta-lib.conf
           sudo ldconfig
 
@@ -58,13 +57,12 @@ jobs:
           export LDFLAGS="-L/usr/local/lib"
           export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
           export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
-      
+
           python -m pip install --upgrade pip
           pip install Cython
-      
-          rm -rf ta-lib
-          git clone https://github.com/mrjbq7/ta-lib.git
-          cd ta-lib
+
+          git clone https://github.com/mrjbq7/ta-lib.git ta-lib-src
+          cd ta-lib-src
           python setup.py build_ext --inplace
           python setup.py install
 
@@ -77,7 +75,6 @@ jobs:
           echo "==> Checking lib path"
           ls -l /usr/local/lib/libta_lib.* || echo "❌ Missing TA-Lib binaries"
 
-      
       - name: Install Python packages (with TA-Lib env)
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
@@ -85,11 +82,17 @@ jobs:
           export LDFLAGS="-L/usr/local/lib"
           export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
           export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
-      
+
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           python -c "import talib; print('✅ TA-Lib successfully imported!')"
 
+      - name: Check Python Environment & TA-Lib Path
+        if: steps.check_changes.outputs.skip_checks != 'true'
+        run: |
+          which python
+          python -m site
+          python -c "import talib; print('TA-Lib path:', talib.__file__)"
 
       - name: Run Flake8 Linting
         if: steps.check_changes.outputs.skip_checks != 'true'
@@ -101,7 +104,12 @@ jobs:
       - name: Run Unit Tests
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
-          pytest tests/ --maxfail=5 --disable-warnings
+          export CFLAGS="-I/usr/local/include"
+          export LDFLAGS="-L/usr/local/lib"
+          export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
+          export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
+
+          python -m pytest tests/ --maxfail=5 --disable-warnings
 
       - name: Verify FastAPI App
         if: steps.check_changes.outputs.skip_checks != 'true'
