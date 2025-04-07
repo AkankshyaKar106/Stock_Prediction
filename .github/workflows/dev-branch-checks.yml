@@ -59,6 +59,13 @@ jobs:
           pip install --no-cache-dir --global-option=build_ext --global-option="-L/usr/lib" --global-option="-I/usr/include" ta-lib
           pip install flake8 pytest
 
+      - name: Run Flake8 Linting
+        if: steps.check_changes.outputs.skip_checks != 'true'
+        run: |
+          echo "Running flake8 linting..."
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
       - name: Run Unit Tests
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
