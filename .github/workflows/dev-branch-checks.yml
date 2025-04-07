@@ -32,7 +32,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pandas scikit-learn tensorflow yfinance fastapi pytest flake8
+          pip install pandas scikit-learn tensorflow yfinance fastapi pytest flake8 streamlit
 
       - name: Run Linting
         run: |
