@@ -16,21 +16,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check for change
+      - name: Check for changes
+        id: check_changes
         run: |
+          git fetch origin dev --depth=2
           if git diff --name-only HEAD^ | grep -q .; then
             echo "Changes detected in dev branch. Running checks..."
           else
             echo "No changes detected. Skipping checks."
-            exit 0
+            echo "skip_checks=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Set up Python
+        if: steps.check_changes.outputs.skip_checks != 'true'
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      -  name: Install TA-Lib C library
+      - name: Install TA-Lib C library
+        if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential wget
@@ -44,27 +48,32 @@ jobs:
           sudo ldconfig
 
       - name: Set TA-Lib env variables
+        if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
           echo "TA_LIBRARY_PATH=/usr/lib" >> $GITHUB_ENV
           echo "TA_INCLUDE_PATH=/usr/include" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
       - name: Install Python dependencies
+        if: steps.check_changes.outputs.skip_checks != 'true'
         env:
           TA_LIBRARY_PATH: /usr/lib
           TA_INCLUDE_PATH: /usr/include
           LD_LIBRARY_PATH: /usr/lib
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install --no-cache-dir -r requirements.txt
           pip install flake8 pytest
+
       - name: Run Unit Tests
+        if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
           pytest tests/ --maxfail=5 --disable-warnings
 
       - name: Verify FastAPI App
+        if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
-          uvicorn api:app --host 127.0.0.1 --port 8002 --reload &
+          nohup uvicorn api:app --host 127.0.0.1 --port 8002 --reload &
           sleep 5
           curl -f http://127.0.0.1:8002/docs || (echo "FastAPI server failed to start" && exit 1)
-          echo "FastAPI app is running successfully."
+          echo "✅ FastAPI app is running successfully."
