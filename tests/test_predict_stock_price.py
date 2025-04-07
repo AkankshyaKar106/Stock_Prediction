@@ -13,7 +13,7 @@ from final_model import predict_stock_price  # noqa: E402
 class TestPredictStockPrice(unittest.TestCase):
 
     @patch('final_model.st')
-    @patch('final_model.fetch_bse_sensex_tickers')
+    @patch('final_model.fetch_nse_nifty_500_tickers')
     @patch('final_model.fetch_stock_data')
     @patch('final_model.process_ticker_data')
     @patch('final_model.load_lstm_model')
