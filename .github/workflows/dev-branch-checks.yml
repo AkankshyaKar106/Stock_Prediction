@@ -45,20 +45,28 @@ jobs:
           ./configure --prefix=/usr
           make
           sudo make install
-          echo "/usr/lib" | sudo tee -a /etc/ld.so.conf.d/ta-lib.conf
+          
+          # Make sure the library is properly linked
           sudo ldconfig
-
+          
+          # Verify the installation
+          ls -la /usr/lib/libta_lib*
+          
       - name: Install Python dependencies
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
+          # Important environment variables
           export TA_LIBRARY_PATH=/usr/lib
           export TA_INCLUDE_PATH=/usr/include
-          export LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH
+          
           python -m pip install --upgrade pip
-          pip install --no-cache-dir -r requirements.txt || true
-          pip install --no-cache-dir --global-option=build_ext --global-option="-L/usr/lib" --global-option="-I/usr/include" ta-lib
-          pip install flake8 pytest
-
+          
+          # Install other requirements first
+          pip install --no-cache-dir $(grep -v ta-lib requirements.txt)
+          
+          # Install TA-Lib separately with proper flags
+          pip install --no-cache-dir ta-lib
+          
       - name: Run Flake8 Linting
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
