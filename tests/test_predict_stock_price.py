@@ -10,7 +10,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(
 from final_model import predict_stock_price  # noqa: E402
 
 
-
 class TestPredictStockPrice(unittest.TestCase):
 
     @patch('final_model.st')
