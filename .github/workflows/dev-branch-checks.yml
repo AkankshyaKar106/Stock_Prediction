@@ -62,21 +62,24 @@ jobs:
 
           # Check if the library is properly registered
           ldconfig -p | grep libta || echo "Library not registered with ldconfig"
+          # Make sure libraries are properly registered
+          sudo ldconfig
+
+          # Check if the library is properly registered
+          ldconfig -p | grep libta || echo "Library not registered with ldconfig"
 
       - name: Install Python packages
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
           python -m pip install --upgrade pip
           
-          # Install TA-Lib Python wrapper using pip with the C library already installed
-          pip install TA-Lib
-          
-          # Install other dependencies
-          pip install -r requirements.txt || pip install $(grep -v "^ta-lib" requirements.txt)
+          # Install all dependencies from requirements.txt
+          # The TA-Lib Python wrapper will build against the C library we just installed
+          pip install -r requirements.txt
           
           # Verify installation
           python -c "import talib; print('TA-Lib successfully imported!')"
-
+          
       - name: Run Flake8 Linting
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
