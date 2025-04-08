@@ -39,60 +39,47 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential wget
-
           wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
           tar -xzf ta-lib-0.4.0-src.tar.gz
           cd ta-lib/
           ./configure --prefix=/usr/local
           make
           sudo make install
-
           echo "/usr/local/lib" | sudo tee -a /etc/ld.so.conf.d/ta-lib.conf
           sudo ldconfig
-
-      - name: Install TA-Lib Python wrapper manually (to avoid _ta_lib.c error)
+          # Verify installation
+          ls -la /usr/local/lib/libta_lib*
+      
+      - name: Install TA-Lib Python wrapper
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
+          # Make sure environment variables are properly set
           export CFLAGS="-I/usr/local/include"
           export LDFLAGS="-L/usr/local/lib"
           export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
           export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
-
+          
+          # Install dependencies
           python -m pip install --upgrade pip
-          pip install Cython
-
+          pip install Cython numpy
+          
+          # Clone and install TA-Lib Python wrapper
           git clone https://github.com/mrjbq7/ta-lib.git ta-lib-src
           cd ta-lib-src
-          python setup.py build_ext --inplace
+          
+          # Build and install with proper environment variables
+          python setup.py build_ext --inplace --library-dirs=/usr/local/lib --include-dirs=/usr/local/include
           python setup.py install
-
-      - name: Debug TA-Lib Installation
-        if: steps.check_changes.outputs.skip_checks != 'true'
-        run: |
-          echo "==> Checking include path"
-          ls -l /usr/local/include/ta-lib || echo "❌ Missing header files"
-
-          echo "==> Checking lib path"
-          ls -l /usr/local/lib/libta_lib.* || echo "❌ Missing TA-Lib binaries"
-
-      - name: Install Python packages (with TA-Lib env)
-        if: steps.check_changes.outputs.skip_checks != 'true'
-        run: |
-          export CFLAGS="-I/usr/local/include"
-          export LDFLAGS="-L/usr/local/lib"
-          export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
-          export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
-
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          
+          # Verify installation
+          cd ..
           python -c "import talib; print('✅ TA-Lib successfully imported!')"
-
-      - name: Check Python Environment & TA-Lib Path
+      
+      - name: Install Python packages
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
-          which python
-          python -m site
-          python -c "import talib; print('TA-Lib path:', talib.__file__)"
+          export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
+          pip install -r requirements.txt
 
       - name: Run Flake8 Linting
         if: steps.check_changes.outputs.skip_checks != 'true'
