@@ -45,32 +45,33 @@ jobs:
           ./configure --prefix=/usr/local
           make
           sudo make install
-          echo "/usr/local/lib" | sudo tee -a /etc/ld.so.conf.d/ta-lib.conf
           sudo ldconfig
           # Verify installation
           ls -la /usr/local/lib/libta_lib*
-      
+        
       - name: Install TA-Lib Python wrapper
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
-          # Try wheel installation first (faster and more reliable)
-          pip install --no-cache-dir --prefer-binary TA-Lib || \
-          # If wheel fails, set environment variables and build from source
-          ( 
-            python -m pip install --upgrade pip setuptools wheel numpy Cython &&
-            export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH" &&
-            export TA_LIBRARY_PATH=/usr/local/lib &&
-            export TA_INCLUDE_PATH=/usr/local/include &&
-            pip install --no-binary :all: TA-Lib
-          )
+          # Set environment variables for the build
+          export TA_LIBRARY_PATH=/usr/local/lib
+          export TA_INCLUDE_PATH=/usr/local/include
+          export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
+            
+          # Update pip and dependencies
+          python -m pip install --upgrade pip setuptools wheel numpy Cython
           
+          # Create symlink to ensure linker can find the library
+          sudo ln -sf /usr/local/lib/libta_lib.so.0.0.0 /usr/lib/libta-lib.so
+            
+          # Try to install TA-Lib
+          pip install --no-binary :all: TA-Lib
+            
           # Verify installation
           python -c "import talib; print('TA-Lib version:', talib.__version__)"
-      
+        
       - name: Install remaining Python packages
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
-          export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
           pip install -r requirements.txt
 
       - name: Run Flake8 Linting
