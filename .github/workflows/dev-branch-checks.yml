@@ -50,30 +50,17 @@ jobs:
           # Verify installation
           ls -la /usr/local/lib/libta_lib*
       
-      - name: Install TA-Lib Python wrapper
+      - name: Install TA-Lib Python wrapper directly
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
-          # Make sure environment variables are properly set
-          export CFLAGS="-I/usr/local/include"
-          export LDFLAGS="-L/usr/local/lib"
-          export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
-          export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
+          # Set up environment variables
+          export TA_INCLUDE_PATH=/usr/local/include
+          export TA_LIBRARY_PATH=/usr/local/lib
+          export CFLAGS="-I$TA_INCLUDE_PATH"
+          export LDFLAGS="-L$TA_LIBRARY_PATH"
           
-          # Install dependencies
-          python -m pip install --upgrade pip
-          pip install Cython numpy
-          
-          # Clone and install TA-Lib Python wrapper
-          git clone https://github.com/mrjbq7/ta-lib.git ta-lib-src
-          cd ta-lib-src
-          
-          # Build and install with proper environment variables
-          python setup.py build_ext --inplace --library-dirs=/usr/local/lib --include-dirs=/usr/local/include
-          python setup.py install
-          
-          # Verify installation
-          cd ..
-          python -c "import talib; print('✅ TA-Lib successfully imported!')"
+          # Use pip to install directly - this works better than manual build
+          pip install ta-lib
       
       - name: Install Python packages
         if: steps.check_changes.outputs.skip_checks != 'true'
