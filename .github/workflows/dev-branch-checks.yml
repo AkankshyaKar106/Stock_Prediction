@@ -34,7 +34,7 @@ jobs:
         with:
           python-version: '3.11.7'
 
-      - name: Install TA-Lib
+      - name: Install TA-Lib C library
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
           sudo apt-get update
@@ -50,49 +50,24 @@ jobs:
           # Verify installation
           ls -la /usr/local/lib/libta_lib*
       
-      - name: Install TA-Lib Python wrapper manually
+      - name: Install TA-Lib Python wrapper
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
-          # Make sure we have the right dependencies
-          python -m pip install --upgrade pip setuptools wheel
-          pip install numpy Cython
-          
-          # Clone the repo
-          git clone https://github.com/mrjbq7/ta-lib.git ta-lib-src
-          cd ta-lib-src
-          
-          # Create a custom setup.cfg file to override paths
-          cat > setup.cfg << EOF
-          [build_ext]
-          include_dirs = /usr/local/include
-          library_dirs = /usr/local/lib
-          libraries = ta_lib
-          EOF
-          
-          # Set environment variables explicitly
-          export TA_LIBRARY_PATH=/usr/local/lib
-          export TA_INCLUDE_PATH=/usr/local/include
-          export CFLAGS="-I$TA_INCLUDE_PATH"
-          export LDFLAGS="-L$TA_LIBRARY_PATH -lta_lib"
-          
-          # Use the full path to the lib when linking
-          find /usr/local -name "libta_lib*"
-          ls -la /usr/local/lib/libta_lib*
-          
-          # Build with very explicit paths
-          python setup.py build_ext \
-            --include-dirs=/usr/local/include \
-            --library-dirs=/usr/local/lib \
-            --rpath=/usr/local/lib
-          
-          # Install
-          python setup.py install
+          # Try wheel installation first (faster and more reliable)
+          pip install --no-cache-dir --prefer-binary TA-Lib || \
+          # If wheel fails, set environment variables and build from source
+          ( 
+            python -m pip install --upgrade pip setuptools wheel numpy Cython &&
+            export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH" &&
+            export TA_LIBRARY_PATH=/usr/local/lib &&
+            export TA_INCLUDE_PATH=/usr/local/include &&
+            pip install --no-binary :all: TA-Lib
+          )
           
           # Verify installation
-          cd ..
           python -c "import talib; print('TA-Lib version:', talib.__version__)"
       
-      - name: Install Python packages
+      - name: Install remaining Python packages
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
           export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
