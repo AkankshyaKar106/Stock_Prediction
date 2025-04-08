@@ -37,19 +37,19 @@ jobs:
       - name: Install TA-Lib C library
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential wget
-        
-        # Download and install specific version of TA-Lib that matches Python wrapper
-        wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
-        tar -xzf ta-lib-0.4.0-src.tar.gz
-        cd ta-lib/
-        ./configure --prefix=/usr/local
-        make
-        sudo make install
-        sudo ldconfig
-        # Verify installation
-        ls -la /usr/local/lib/libta_lib*
+          sudo apt-get update
+          sudo apt-get install -y build-essential wget
+          
+          # Download and install specific version of TA-Lib that matches Python wrapper
+          wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
+          tar -xzf ta-lib-0.4.0-src.tar.gz
+          cd ta-lib/
+          ./configure --prefix=/usr/local
+          make
+          sudo make install
+          sudo ldconfig
+          # Verify installation
+          ls -la /usr/local/lib/libta_lib*
 
       - name: Install TA-Lib Python wrapper
         if: steps.check_changes.outputs.skip_checks != 'true'
