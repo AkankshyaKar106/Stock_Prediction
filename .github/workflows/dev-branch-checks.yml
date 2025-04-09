@@ -38,59 +38,54 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential wget
-      
+
           # Download and extract TA-Lib source
           wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
           tar -xzf ta-lib-0.4.0-src.tar.gz
           cd ta-lib/
-      
-          # Patch format-security warning in gen_code.c
+
+          # Patch format-security warning
           sed -i 's/fprintf( out, prefix );/fprintf( out, "%s", prefix );/' src/tools/gen_code/gen_code.c
-      
-          # Configure and build TA-Lib
+
+          # Configure, build, and install TA-Lib
           ./configure --prefix=/usr/local CFLAGS="-Wno-format-security"
-          make -j1
+          make -j$(nproc)
           sudo make install
-      
-          # Update shared lib cache
+
+          # Update shared library cache
           sudo ldconfig
-      
-          # Confirm TA-Lib installed
-          ls -la /usr/local/lib/libta_lib*
-      
+
       - name: Install TA-Lib Python wrapper
         run: |
-          # Set environment variables for build
+          # Environment variables for TA-Lib
           export TA_LIBRARY_PATH=/usr/local/lib
           export TA_INCLUDE_PATH=/usr/local/include
-      
+
           python -m pip install --upgrade pip setuptools wheel
           pip install numpy==1.24.3
-          pip install Cython==0.29.36  # Compatible with TA-Lib
-      
-          echo "Attempting to install TA-Lib Python wrapper..."
-      
+          pip install Cython==0.29.36
+
           # Detect Python version
-          python_version=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
-          echo "Detected Python version: $python_version"
-      
-          # Attempt to install prebuilt wheel
-          if [[ "$python_version" == "3.11" ]]; then
-            pip install --no-cache-dir https://github.com/mrjbq7/ta-lib/releases/download/0.4.24/TA_Lib-0.4.24-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl || true
-          elif [[ "$python_version" == "3.10" ]]; then
+          PYTHON_VERSION=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+          echo "Detected Python version: $PYTHON_VERSION"
+
+          # Try pre-built wheel first
+          if [[ "$PYTHON_VERSION" == "3.10" ]]; then
             pip install --no-cache-dir https://github.com/mrjbq7/ta-lib/releases/download/0.4.24/TA_Lib-0.4.24-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl || true
+          elif [[ "$PYTHON_VERSION" == "3.11" ]]; then
+            pip install --no-cache-dir https://github.com/mrjbq7/ta-lib/releases/download/0.4.24/TA_Lib-0.4.24-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl || true
           fi
-      
-          # If wheel fails, fall back to source build
-          python -c "import talib" 2>/dev/null || {
-            echo "Wheel installation failed. Attempting source build..."
+
+          # Fallback to source install if wheel fails
+          if ! python -c "import talib" 2>/dev/null; then
+            echo "Wheel install failed. Trying source build..."
             CFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" pip install --no-binary :all: ta-lib==0.4.24 || {
-              echo "Source install failed. Attempting GitHub build..."
+              echo "Source build failed. Trying install from GitHub..."
               pip install git+https://github.com/mrjbq7/ta-lib.git@TA_Lib-0.4.24
             }
-          }
-      
-          # Final verification
+          fi
+
+          # Final check
           python -c "import talib; print('TA-Lib version:', talib.__version__)"
       
       - name: Install remaining Python packages
