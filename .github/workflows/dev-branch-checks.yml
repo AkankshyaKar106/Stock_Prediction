@@ -35,7 +35,6 @@ jobs:
           python-version: '3.11.7'
 
       - name: Install TA-Lib C library
-        if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential wget
@@ -47,13 +46,14 @@ jobs:
           ./configure --prefix=/usr/local
           make
           sudo make install
-          sudo ldconfig
+          
+          # Run ldconfig to update the shared library cache
+          sudo ldconfig /usr/local/lib
           
           # Verify installation
           ls -la /usr/local/lib/libta_lib*
-
+          
       - name: Install TA-Lib Python wrapper
-        if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
           # Set environment variables for the build
           export TA_LIBRARY_PATH=/usr/local/lib
@@ -66,14 +66,17 @@ jobs:
           # Install older Cython version that's compatible with TA-Lib
           pip install Cython==0.29.36
           
-          # Try the newer version of TA-Lib with specific build options 
-          pip install --global-option=build_ext --global-option="-L/usr/local/lib/" --global-option="-I/usr/local/include/" Ta-Lib
+          # Try direct installation with explicit flags
+          LDFLAGS="-L/usr/local/lib" CFLAGS="-I/usr/local/include" pip install ta-lib==0.4.24
+          
+          # If the above fails, try these alternatives (uncomment as needed)
+          # pip install --no-use-pep517 Ta-Lib
+          # pip install git+https://github.com/mrjbq7/ta-lib.git@TA_Lib-0.4.0
           
           # Verify installation
           python -c "import talib; print('TA-Lib version:', talib.__version__)"
       
       - name: Install remaining Python packages
-        if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
           pip install -r requirements.txt
 
