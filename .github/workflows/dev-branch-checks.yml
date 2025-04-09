@@ -16,55 +16,120 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check for change
+      - name: Check for changes
+        id: check_changes
         run: |
-          if git diff --name-only HEAD^ | grep -q .; then
-            echo "Changes detected in dev branch. Running checks..."
+          git fetch --unshallow || true
+          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q .; then
+            echo "Changes detected"
+            echo "skip_checks=false" >> $GITHUB_OUTPUT
           else
-            echo "No changes detected. Skipping checks."
-            exit 0
+            echo "No changes detected"
+            echo "skip_checks=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Set up Python
+        if: steps.check_changes.outputs.skip_checks != 'true'
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.11.7'
 
-      -  name: Install TA-Lib C library
+      - name: Install TA-Lib C library
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential wget
+          
+          # Download and install TA-Lib
           wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
-          tar -xvzf ta-lib-0.4.0-src.tar.gz
-          cd ta-lib
-          ./configure --prefix=/usr
-          make
+          tar -xzf ta-lib-0.4.0-src.tar.gz
+          cd ta-lib/
+          
+          # Fix format-security warning by patching the source
+          sed -i 's/fprintf( out, prefix );/fprintf( out, "%s", prefix );/' src/tools/gen_code/gen_code.c
+          
+          # Configure with less strict warnings
+          ./configure --prefix=/usr/local CFLAGS="-Wno-format-security"
+          
+          # Build with multiple cores but continue on errors
+          make -j$(nproc) || make
+          
+          # Install even if there were non-critical errors
           sudo make install
-          echo "/usr/lib" | sudo tee -a /etc/ld.so.conf.d/ta-lib.conf
+          
+          # Run ldconfig to update the shared library cache
           sudo ldconfig
-
-      - name: Set TA-Lib env variables
+          
+          # Verify installation
+          ls -la /usr/local/lib/libta_lib*
+      
+      - name: Install TA-Lib Python wrapper
         run: |
-          echo "TA_LIBRARY_PATH=/usr/lib" >> $GITHUB_ENV
-          echo "TA_INCLUDE_PATH=/usr/include" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-
-      - name: Install Python dependencies
-        env:
-          TA_LIBRARY_PATH: /usr/lib
-          TA_INCLUDE_PATH: /usr/include
-          LD_LIBRARY_PATH: /usr/lib
+          # Set environment variables for the build
+          export TA_LIBRARY_PATH=/usr/local/lib
+          export TA_INCLUDE_PATH=/usr/local/include
+          
+          # Update pip and dependencies
+          python -m pip install --upgrade pip setuptools wheel
+          pip install numpy==1.24.3  # Specific version for compatibility
+          
+          # Install compatible Cython version
+          pip install Cython==0.29.36
+          
+          # Try multiple installation methods
+          echo "Attempting to install TA-Lib Python wrapper..."
+          
+          # Try prebuilt wheel first based on Python version
+          python_version=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+          echo "Detected Python version: $python_version"
+          
+          if [[ "$python_version" == "3.11" ]]; then
+            pip install --no-cache-dir https://github.com/mrjbq7/ta-lib/releases/download/ta-lib-0.4.24/TA_Lib-0.4.24-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl || true
+          elif [[ "$python_version" == "3.10" ]]; then
+            pip install --no-cache-dir https://github.com/mrjbq7/ta-lib/releases/download/ta-lib-0.4.24/TA_Lib-0.4.24-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl || true
+          fi
+          
+          # Check if installation succeeded
+          python -c "import talib" 2>/dev/null || {
+            echo "Wheel installation failed, trying source installation..."
+            LDFLAGS="-L/usr/local/lib" CFLAGS="-I/usr/local/include" pip install --no-binary :all: ta-lib==0.4.24 || {
+              echo "Source installation failed, trying git repository..."
+              pip install git+https://github.com/mrjbq7/ta-lib.git@TA_Lib-0.4.24
+            }
+          }
+          
+          # Verify installation
+          python -c "import talib; print('TA-Lib version:', talib.__version__)"
+      
+      - name: Install remaining Python packages
         run: |
-          pip install --upgrade pip
-          pip install --no-cache-dir -r requirements.txt
-          pip install flake8 pytest
+          pip install -r requirements.txt
+
+      - name: Install linting tools
+        run: |
+          pip install flake8
+          echo "Flake8 installed $(flake8 --version)"
+
+      - name: Run Flake8 Linting
+        if: steps.check_changes.outputs.skip_checks != 'true'
+        run: |
+          echo "Running flake8 linting..."
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
       - name: Run Unit Tests
+        if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
-          pytest tests/ --maxfail=5 --disable-warnings
+          export CFLAGS="-I/usr/local/include"
+          export LDFLAGS="-L/usr/local/lib"
+          export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
+          export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
+
+          python -m pytest tests/ --maxfail=5 --disable-warnings
 
       - name: Verify FastAPI App
+        if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
-          uvicorn api:app --host 127.0.0.1 --port 8002 --reload &
+          nohup uvicorn api:app --host 127.0.0.1 --port 8002 --reload &
           sleep 5
           curl -f http://127.0.0.1:8002/docs || (echo "FastAPI server failed to start" && exit 1)
-          echo "FastAPI app is running successfully."
+          echo "✅ FastAPI app is running successfully."

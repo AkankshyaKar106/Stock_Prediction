@@ -11,6 +11,5 @@ fastapi
 uvicorn
 pydantic
 streamlit
-ta-lib
 pytz
 gdown
