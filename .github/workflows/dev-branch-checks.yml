@@ -38,76 +38,68 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential wget
-          
+      
           # Download and install TA-Lib
           wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
           tar -xzf ta-lib-0.4.0-src.tar.gz
           cd ta-lib/
-          
+      
           # Fix format-security warning by patching the source
           sed -i 's/fprintf( out, prefix );/fprintf( out, "%s", prefix );/' src/tools/gen_code/gen_code.c
-          
-          # Configure with less strict warnings
+      
+          # Configure and build
           ./configure --prefix=/usr/local CFLAGS="-Wno-format-security"
-          
-          # Build with multiple cores but continue on errors
-          make -j$(nproc) || make
-          
-          # Install even if there were non-critical errors
+          make -j$(nproc)
           sudo make install
-          
-          # Run ldconfig to update the shared library cache
+      
+          # Update shared lib cache
           sudo ldconfig
-          
-          # Verify installation
+      
+          # Verify TA-Lib library is installed
           ls -la /usr/local/lib/libta_lib*
       
       - name: Install TA-Lib Python wrapper
         run: |
-          # Set environment variables for the build
+          # Set env vars for TA-Lib locations
           export TA_LIBRARY_PATH=/usr/local/lib
           export TA_INCLUDE_PATH=/usr/local/include
-          
-          # Update pip and dependencies
+      
           python -m pip install --upgrade pip setuptools wheel
-          pip install numpy==1.24.3  # Specific version for compatibility
-          
-          # Install compatible Cython version
-          pip install Cython==0.29.36
-          
-          # Try multiple installation methods
+          pip install numpy==1.24.3
+          pip install Cython==0.29.36  # Compatible with ta-lib's Cython code
+      
           echo "Attempting to install TA-Lib Python wrapper..."
-          
-          # Try prebuilt wheel first based on Python version
+      
           python_version=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
           echo "Detected Python version: $python_version"
-          
+      
+          # Install prebuilt wheel if available
           if [[ "$python_version" == "3.11" ]]; then
-            pip install --no-cache-dir https://github.com/mrjbq7/ta-lib/releases/download/ta-lib-0.4.24/TA_Lib-0.4.24-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl || true
+            pip install --no-cache-dir https://github.com/mrjbq7/ta-lib/releases/download/0.4.24/TA_Lib-0.4.24-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl || true
           elif [[ "$python_version" == "3.10" ]]; then
-            pip install --no-cache-dir https://github.com/mrjbq7/ta-lib/releases/download/ta-lib-0.4.24/TA_Lib-0.4.24-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl || true
+            pip install --no-cache-dir https://github.com/mrjbq7/ta-lib/releases/download/0.4.24/TA_Lib-0.4.24-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl || true
           fi
-          
-          # Check if installation succeeded
+      
+          # Check if wheel install succeeded
           python -c "import talib" 2>/dev/null || {
-            echo "Wheel installation failed, trying source installation..."
-            LDFLAGS="-L/usr/local/lib" CFLAGS="-I/usr/local/include" pip install --no-binary :all: ta-lib==0.4.24 || {
-              echo "Source installation failed, trying git repository..."
+            echo "Wheel installation failed. Attempting source build..."
+            # Build from source with proper flags
+            CFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" pip install --no-binary :all: ta-lib==0.4.24 || {
+              echo "Source install failed. Attempting from GitHub..."
               pip install git+https://github.com/mrjbq7/ta-lib.git@TA_Lib-0.4.24
             }
           }
-          
-          # Verify installation
+      
+          # Final verification
           python -c "import talib; print('TA-Lib version:', talib.__version__)"
       
       - name: Install remaining Python packages
         run: |
           pip install -r requirements.txt
-
-      - name: Install linting tools
-        run: |
-          pip install flake8
-          echo "Flake8 installed $(flake8 --version)"
+            - name: Install linting tools
+              run: |
+                pip install flake8
+                echo "Flake8 installed $(flake8 --version)"
 
       - name: Run Flake8 Linting
         if: steps.check_changes.outputs.skip_checks != 'true'
