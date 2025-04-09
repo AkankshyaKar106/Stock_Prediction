@@ -38,21 +38,18 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential wget
-          
           # Download and install TA-Lib
           wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
           tar -xzf ta-lib-0.4.0-src.tar.gz
           cd ta-lib/
           ./configure --prefix=/usr/local
-          make
+          make -j$(nproc)
           sudo make install
-          
           # Run ldconfig to update the shared library cache
-          sudo ldconfig /usr/local/lib
-          
+          sudo ldconfig
           # Verify installation
           ls -la /usr/local/lib/libta_lib*
-          
+      
       - name: Install TA-Lib Python wrapper
         run: |
           # Set environment variables for the build
@@ -61,17 +58,18 @@ jobs:
           export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
           
           # Update pip and dependencies
-          python -m pip install --upgrade pip setuptools wheel numpy
+          python -m pip install --upgrade pip setuptools wheel
+          pip install numpy==1.24.3
           
-          # Install older Cython version that's compatible with TA-Lib
+          # Install compatible Cython version
           pip install Cython==0.29.36
           
-          # Try direct installation with explicit flags
-          LDFLAGS="-L/usr/local/lib" CFLAGS="-I/usr/local/include" pip install ta-lib==0.4.24
-          
-          # If the above fails, try these alternatives (uncomment as needed)
-          # pip install --no-use-pep517 Ta-Lib
-          # pip install git+https://github.com/mrjbq7/ta-lib.git@TA_Lib-0.4.0
+          # Try installation with prebuilt wheel first (for Python 3.11)
+          pip install --no-cache-dir https://github.com/mrjbq7/ta-lib/releases/download/ta-lib-0.4.24/TA_Lib-0.4.24-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl || \
+          # If wheel fails, compile from source with explicit flags
+          LDFLAGS="-L/usr/local/lib" CFLAGS="-I/usr/local/include" pip install --no-binary :all: ta-lib==0.4.24 || \
+          # Final fallback to git source
+          pip install git+https://github.com/mrjbq7/ta-lib.git@TA_Lib-0.4.24
           
           # Verify installation
           python -c "import talib; print('TA-Lib version:', talib.__version__)"
