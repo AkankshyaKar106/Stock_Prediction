@@ -38,20 +38,17 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential wget
-
           # Download and extract TA-Lib source
           wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
           tar -xzf ta-lib-0.4.0-src.tar.gz
           cd ta-lib/
-
           # Patch format-security warning
           sed -i 's/fprintf( out, prefix );/fprintf( out, "%s", prefix );/' src/tools/gen_code/gen_code.c
-
           # Configure, build, and install TA-Lib
           ./configure --prefix=/usr/local CFLAGS="-Wno-format-security"
-          make -j$(nproc)
+          # Build with single job to avoid race conditions
+          make -j1
           sudo make install
-
           # Update shared library cache
           sudo ldconfig
 
