@@ -102,7 +102,32 @@ jobs:
       - name: Verify FastAPI App
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
-          nohup uvicorn main:app --host 127.0.0.1 --port 8002 --reload &
-          sleep 5
-          curl -f http://127.0.0.1:8002/docs || (echo "FastAPI server failed to start" && exit 1)
-          echo "✅ FastAPI app is running successfully."
+          # Start FastAPI app in background
+          nohup uvicorn main:app --host 127.0.0.1 --port 8002 --reload > fastapi.log 2>&1 &
+          
+          # Save the PID to be able to check if process is still running
+          FASTAPI_PID=$!
+          
+          # Increase wait time to allow for TensorFlow initialization
+          echo "Waiting for FastAPI server to start (30 seconds)..."
+          for i in {1..30}; do
+            # Check if server is responding
+            if curl -s -f http://127.0.0.1:8002/docs > /dev/null; then
+              echo "✅ FastAPI app is running successfully."
+              exit 0
+            fi
+            
+            # Check if the process is still running
+            if ! ps -p $FASTAPI_PID > /dev/null; then
+              echo "❌ FastAPI process has died. Showing logs:"
+              cat fastapi.log
+              exit 1
+            fi
+            
+            echo "Still waiting... ($i/30)"
+            sleep 1
+          done
+          
+          echo "❌ Timeout waiting for FastAPI server to start. Showing logs:"
+          cat fastapi.log
+          exit 1
