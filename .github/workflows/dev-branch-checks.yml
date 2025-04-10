@@ -44,8 +44,10 @@ jobs:
           cd ta-lib/
           # Patch format-security warning
           sed -i 's/fprintf( out, prefix );/fprintf( out, "%s", prefix );/' src/tools/gen_code/gen_code.c
+          # Set environment variables
+          export CFLAGS="-I/usr/local/include -Wno-format-security"
           # Configure, build, and install TA-Lib
-          ./configure --prefix=/usr/local CFLAGS="-Wno-format-security"
+          ./configure --prefix=/usr/local
           # Build with single job to avoid race conditions
           make -j1
           sudo make install
@@ -88,6 +90,7 @@ jobs:
       - name: Install remaining Python packages
         run: |
           pip install -r requirements.txt
+          pip install pytest
       - name: Install linting tools
         run: |
           pip install flake8
