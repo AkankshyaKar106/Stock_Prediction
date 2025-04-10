@@ -91,10 +91,10 @@ jobs:
       - name: Install remaining Python packages
         run: |
           pip install -r requirements.txt
-            - name: Install linting tools
-              run: |
-                pip install flake8
-                echo "Flake8 installed $(flake8 --version)"
+      - name: Install linting tools
+        run: |
+          pip install flake8
+          echo "Flake8 installed $(flake8 --version)"
 
       - name: Run Flake8 Linting
         if: steps.check_changes.outputs.skip_checks != 'true'
