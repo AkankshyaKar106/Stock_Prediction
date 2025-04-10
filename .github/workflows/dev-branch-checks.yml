@@ -54,13 +54,11 @@ jobs:
 
       - name: Install TA-Lib Python wrapper
         run: |
-          # Clean any existing installations that might cause conflicts
+          # Clean any existing installations
           pip uninstall -y numpy ta-lib || true
           
-          # Install build dependencies first
+          # Install specific versions known to work together
           python -m pip install --upgrade pip setuptools wheel
-          
-          # Install a specific NumPy version known to be compatible with TA-Lib
           pip install numpy==1.23.5
           pip install Cython==0.29.36
           
@@ -70,16 +68,13 @@ jobs:
           export CFLAGS="-I/usr/local/include"
           export LDFLAGS="-L/usr/local/lib"
           
-          # Install the pre-built wheel directly for Python 3.10
-          pip install --no-cache-dir https://files.pythonhosted.org/packages/34/5a/5d79f4be1a5c8f2d4221a1c18fcc7fd82ae75e0cd5c93e0c1b06052f3814/TA_Lib-0.4.24-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+          # Try the official wheel from GitHub repo
+          pip install --no-cache-dir https://github.com/mrjbq7/ta-lib/releases/download/0.4.24/TA_Lib-0.4.24-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
           
-          # Check if install was successful, if not try source build
+          # If that fails, build from source
           if ! python -c "import talib" 2>/dev/null; then
-            echo "Wheel install failed. Trying source build..."
-            pip install --no-binary :all: ta-lib==0.4.24 || {
-              echo "Source build failed. Trying install from GitHub..."
-              pip install git+https://github.com/mrjbq7/ta-lib.git@TA_Lib-0.4.24
-            }
+            echo "Wheel install failed. Building from source..."
+            CFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" pip install --no-binary :all: ta-lib==0.4.24
           fi
           
           # Final check
@@ -88,11 +83,14 @@ jobs:
       
       - name: Install remaining Python packages
         run: |
-          # Install pytest first to avoid dependency conflicts
+          # Install pytest first
           pip install pytest
+          
           # Then install the rest of the requirements
-          pip install -r requirements.txt --no-deps
-          # Finally install any missing dependencies
+          # Use --no-deps first to avoid upgrading numpy
+          pip install -r requirements.txt --no-deps || true
+          
+          # Then make sure all dependencies are installed correctly
           pip install -r requirements.txt
 
       - name: Install linting tools
