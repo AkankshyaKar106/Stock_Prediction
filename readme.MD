@@ -38,23 +38,25 @@ This repository provides a full-stack stock prediction system using:
 ├── requirements.txt                 # Python dependencies
 ├── setup.cfg
 └── README.md
+
 ---
-⚙️ Setup Instructions
-1. 🔽 Clone the Repository
-git clone https://github.com/AkankshyaKar106/Stock_Prediction
+
+## ⚙️ Setup Instructions
+### 1. 🔽 Clone the Repository
+```bash git clone https://github.com/AkankshyaKar106/Stock_Prediction
 cd Stock_Prediction
----
-2. 📦 Install Dependencies
+
+### 2. 📦 Install Dependencies
 pip install -r requirements.txt
----
-3. 📂 Ensure the Following Model Files Are Present in the Root Directory
+
+### 3. 📂 Ensure the Following Model Files Are Present in the Root Directory
 - lstm.h5  
 - tokenizer1.pkl  
 - scaler1.pkl  
 - sentiment_scaler1.pkl  
 - target_scaler1.pkl
----
-4. 🚀 Run the Streamlit App (Frontend)
+
+### 4. 🚀 Run the Streamlit App (Frontend)
 Prediction App:
 streamlit run final_model.py
 
@@ -63,13 +65,13 @@ streamlit run compare.py
 
 Access it in your browser at:
 http://localhost:8501
----
-5. ⚡ Run the FastAPI Server (Backend)
+
+### 5. ⚡ Run the FastAPI Server (Backend)
 uvicorn main:app --reload --port 8002
 
 Once running, open the API docs at:
 http://127.0.0.1:8002/docs
----
-6. ✅ GitHub CI/CD
+
+### 6. ✅ GitHub CI/CD
 CI/CD is managed using GitHub Actions. The workflow file is located at:
 .github/workflows/dev-branch-checks.yml
