@@ -43,11 +43,17 @@ This repository provides a full-stack stock prediction system using:
 
 ## ⚙️ Setup Instructions
 ### 1. 🔽 Clone the Repository
-```bash git clone https://github.com/AkankshyaKar106/Stock_Prediction```
-```bash cd Stock_Prediction```
+```bash 
+git clone https://github.com/AkankshyaKar106/Stock_Prediction
+```
+```bash 
+cd Stock_Prediction
+```
 
 ### 2. 📦 Install Dependencies
-```bash pip install -r requirements.txt```
+```bash 
+pip install -r requirements.txt
+```
 
 ### 3. 📂 Ensure the Following Model Files Are Present in the Root Directory
 - lstm.h5  
@@ -58,19 +64,29 @@ This repository provides a full-stack stock prediction system using:
 
 ### 4. 🚀 Run the Streamlit App (Frontend)
 Prediction App:
-```bash streamlit run final_model.py```
+```bash 
+streamlit run final_model.py
+```
 
 Comparison App:
-```bash streamlit run compare.py```
+```bash 
+streamlit run compare.py
+```
 
 Access it in your browser at:
-```bash http://localhost:8501```
+```bash 
+http://localhost:8501
+```
 
 ### 5. ⚡ Run the FastAPI Server (Backend)
-```bash uvicorn main:app --reload --port 8002```
+```bash 
+uvicorn main:app --reload --port 8002
+```
 
 Once running, open the API docs at:
-```bash http://127.0.0.1:8002/docs```
+```bash
+http://127.0.0.1:8002/docs
+```
 
 ### 6. ✅ GitHub CI/CD
 CI/CD is managed using GitHub Actions. The workflow file is located at:
