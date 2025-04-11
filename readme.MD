@@ -63,6 +63,8 @@ pip install -r requirements.txt
 - target_scaler1.pkl
 
 ### 4. 🚀 Run the Streamlit App (Frontend)
+To launch the prediction web interface, open a terminal in the project root directory and run:
+
 Prediction App:
 ```bash 
 streamlit run final_model.py
@@ -74,14 +76,18 @@ streamlit run compare.py
 ```
 
 ### 🔗 Access the App  
+Once the app is running, open your browser and visit:
 [Streamlit App](http://localhost:8501)
 
 ### 5. ⚡ Run the FastAPI Server (Backend)
+Start the FastAPI backend server by running:
 ```bash 
 uvicorn main:app --reload --port 8002
 ```
+This will launch the backend API server on port 8002.
 
-Once running, open the API docs at:  
+🔗 Access the FastAPI Documentation
+After the server starts, you can explore the API endpoints via Swagger UI at:
 [👉 FastAPI Docs](http://127.0.0.1:8002/docs)
 
 ### 6. ✅ GitHub CI/CD  
