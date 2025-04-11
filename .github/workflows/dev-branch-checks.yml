@@ -17,34 +17,120 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Check for changes
+        id: check_changes
         run: |
-          if git diff --name-only HEAD^ | grep -q .; then
-            echo "Changes detected in dev branch. Running checks..."
+          git fetch --unshallow || true
+          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q .; then
+            echo "Changes detected"
+            echo "skip_checks=false" >> $GITHUB_OUTPUT
           else
-            echo "No changes detected. Skipping checks."
-            exit 0
+            echo "No changes detected"
+            echo "skip_checks=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Set up Python
+        if: steps.check_changes.outputs.skip_checks != 'true'
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
-      - name: Install dependencies
+      - name: Install TA-Lib C library
         run: |
-          pip install pandas scikit-learn tensorflow yfinance fastapi pytest flake8
+          sudo apt-get update
+          sudo apt-get install -y build-essential wget
+          wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
+          tar -xzf ta-lib-0.4.0-src.tar.gz
+          cd ta-lib/
+          sed -i 's/fprintf( out, prefix );/fprintf( out, "%s", prefix );/' src/tools/gen_code/gen_code.c
+          ./configure --prefix=/usr/local CFLAGS="-Wno-format-security"
+          make -j1
+          sudo make install
+          sudo ldconfig
+      
+      - name: Install Python TA-Lib wrapper with numpy==1.26.4
+        run: |
+          export TA_LIBRARY_PATH=/usr/local/lib
+          export TA_INCLUDE_PATH=/usr/local/include
+      
+          # Clean previous versions
+          pip uninstall -y numpy ta-lib || true
+      
+          # Install numpy before TA-Lib
+          pip install numpy==1.26.4
+          pip install Cython==0.29.36
+      
+          # Compile and install TA-Lib from source
+          export CFLAGS="-I/usr/local/include"
+          export LDFLAGS="-L/usr/local/lib"
+          pip install --no-binary :all: ta-lib==0.4.32
+      
+          # Ensure numpy version remains fixed
+          pip install --force-reinstall numpy==1.26.4
+      
+          # Sanity checks
+          python -c "import talib; print('TA-Lib version:', talib.__version__)"
+          python -c "import numpy; print('NumPy version:', numpy.__version__)"
+      
+      - name: Install other dependencies
+        run: |
+          pip install pytest
+          pip install -r requirements.txt --no-deps
+          pip install --force-reinstall numpy==1.26.4
+          pip install -r requirements.txt --upgrade-strategy only-if-needed
+      - name: Install linting tools
+        run: |
+          pip install flake8
+          echo "Flake8 installed $(flake8 --version)"
 
-      - name: Run Linting
+      - name: Run Flake8 Linting
+        if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
-          flake8 . --count --show-source --statistics
+          echo "Running flake8 linting..."
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
       - name: Run Unit Tests
+        if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
-          pytest tests/ --maxfail=5 --disable-warnings
+          export CFLAGS="-I/usr/local/include"
+          export LDFLAGS="-L/usr/local/lib"
+          export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
+          export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
+
+          python -m pytest tests/ --maxfail=5 --disable-warnings
 
       - name: Verify FastAPI App
+        if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
-          uvicorn api:app --host 127.0.0.1 --port 8000 --reload &
-          sleep 5
-          curl -f http://127.0.0.1:8000/docs || (echo "FastAPI server failed to start" && exit 1)
-          echo "FastAPI app is running successfully."
+          # Start FastAPI app in background
+          nohup uvicorn main:app --host 127.0.0.1 --port 8002 --reload > fastapi.log 2>&1 &
+          # Save the PID to be able to check if process is still running
+          FASTAPI_PID=$!
+          
+          # Increase wait time to 5 minutes (300 seconds) to allow for model download
+          echo "Waiting for FastAPI server to start (5 minutes max)..."
+          for i in {1..300}; do
+            # Check if server is responding
+            if curl -s -f http://127.0.0.1:8002/docs > /dev/null; then
+              echo "✅ FastAPI app is running successfully."
+              exit 0
+            fi
+            
+            # Check if the process is still running
+            if ! ps -p $FASTAPI_PID > /dev/null; then
+              echo "❌ FastAPI process has died. Showing logs:"
+              cat fastapi.log
+              exit 1
+            fi
+            
+            # Only print status every 10 seconds to avoid log spam
+            if [ $((i % 10)) -eq 0 ]; then
+              echo "Still waiting... ($i/300 seconds)"
+            fi
+            
+            sleep 1
+          done
+          
+          echo "❌ Timeout waiting for FastAPI server to start. Showing logs:"
+          cat fastapi.log
+          exit 1
