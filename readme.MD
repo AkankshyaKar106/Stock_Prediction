@@ -1,53 +1,75 @@
 # 📈 Stock Price Prediction Platform
 
-This repository contains a dual-interface system for stock price prediction:
+This repository provides a full-stack stock prediction system using:
 
-- A **Streamlit-based web app** (`final_model.py`) for visualizing and predicting stock prices.
-- A **FastAPI backend** (`main.py`) for accessing prediction APIs and integrating services.
-- A **comparison module** (`compare.py`) to evaluate predicted vs. actual prices.
-- A CI/CD workflow setup using GitHub Actions.
-
-## 📁 Folder Structure
-
-. ├── backend/ │ ├── compare_utils.py │ ├── final_models_utils.py │ └── ... ├── .github/workflows/ │ └── dev-branch-checks.yml ├── final_model.py # Streamlit frontend ├── main.py # FastAPI backend ├── compare.py # Prediction comparison logic ├── rf.py # Random Forest model training ├── lstm_model.py # LSTM sentiment model ├── lstm.h5 # LSTM model weights ├── lstm.txt # LSTM summary/info ├── random_forest.txt # Random Forest summary/info ├── scaler1.pkl # Feature scaler ├── sentiment_scaler1.pkl # Sentiment score scaler ├── target_scaler1.pkl # Target scaler ├── tokenizer1.pkl # Tokenizer for sentiment data ├── requirements.txt ├── setup.cfg └── README.md
+- 🔹 **Streamlit App** (`final_model.py`): A web interface for predicting and visualizing stock prices.
+- 🔹 **FastAPI Backend** (`main.py`): Provides prediction APIs and integration endpoints.
+- 🔹 **Comparison Module** (`compare.py`): Compares predicted vs. actual prices.
+- 🔹 **CI/CD** via GitHub Actions for streamlined development workflows.
 
 ---
 
-## ⚙️ Setup Instructions
+## 📁 Folder Structure
 
-1. Clone the repository
-
-```bash
+```plaintext
+.
+├── backend/
+│   ├── compare_utils.py             # Utilities for compare.py
+│   ├── final_models_utils.py        # Utilities for final_model.py
+│
+├── .github/
+│   └── workflows/
+│       └── dev-branch-checks.yml    # CI/CD workflow
+│
+├── final_model.py                   # Streamlit frontend
+├── main.py                          # FastAPI backend
+├── compare.py                       # Prediction vs actual analysis
+├── rf.py                            # Random Forest training
+├── lstm_model.py                    # LSTM-based sentiment model
+│
+├── lstm.h5                          # Trained LSTM model weights
+├── lstm.txt                         # LSTM summary
+├── random_forest.txt                # Random Forest model summary
+├── tokenizer1.pkl                   # Tokenizer for sentiment input
+├── scaler1.pkl                      # Feature scaler
+├── sentiment_scaler1.pkl            # Sentiment score scaler
+├── target_scaler1.pkl               # Target variable scaler
+│
+├── requirements.txt                 # Python dependencies
+├── setup.cfg
+└── README.md
+---
+⚙️ Setup Instructions
+1. 🔽 Clone the Repository
 git clone https://github.com/AkankshyaKar106/Stock_Prediction
 cd Stock_Prediction
-
-2. Install dependencies
-
+---
+2. 📦 Install Dependencies
 pip install -r requirements.txt
-
-3. Ensure the following model files are present in the root directory:
-
-- lstm.h5
-- tokenizer1.pkl
-- scaler1.pkl
-- sentiment_scaler1.pkl
+---
+3. 📂 Ensure the Following Model Files Are Present in the Root Directory
+- lstm.h5  
+- tokenizer1.pkl  
+- scaler1.pkl  
+- sentiment_scaler1.pkl  
 - target_scaler1.pkl
-
-4. Run the Streamlit App (Frontend)
-
-- Launch the interactive web interface for predictions:
+---
+4. 🚀 Run the Streamlit App (Frontend)
+Prediction App:
 streamlit run final_model.py
 
-- Launch the interactive web interface for predictions:
+Comparison App:
 streamlit run compare.py
 
-5. Run the FastAPI Server (Backend)
-
-Start the API server:
+Access it in your browser at:
+http://localhost:8501
+---
+5. ⚡ Run the FastAPI Server (Backend)
 uvicorn main:app --reload --port 8002
-Once running, visit http://127.0.0.1:8002/docs to explore and test API endpoints via Swagger UI.
 
+Once running, open the API docs at:
+http://127.0.0.1:8002/docs
+---
 6. ✅ GitHub CI/CD
-
-CI/CD is managed using GitHub Actions. The workflow file:
+CI/CD is managed using GitHub Actions. The workflow file is located at:
 .github/workflows/dev-branch-checks.yml
