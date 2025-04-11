@@ -1,36 +1,15 @@
-This project predicts stock prices using a hybrid approach that combines sentiment analysis powered by an LSTM model and stock data processed through a Random Forest regression model. It features a user-friendly **Streamlit web app** for interaction and a **FastAPI backend** for API-based prediction. Model evaluation and CI/CD integration are also included.
+# 📈 Stock Price Prediction Platform
 
----
+This repository contains a dual-interface system for stock price prediction:
 
-## 🧠 Key Features
+- A **Streamlit-based web app** (`final_model.py`) for visualizing and predicting stock prices.
+- A **FastAPI backend** (`main.py`) for accessing prediction APIs and integrating services.
+- A **comparison module** (`compare.py`) to evaluate predicted vs. actual prices.
+- A CI/CD workflow setup using GitHub Actions.
 
-- 💡 Predict stock prices using sentiment-enhanced models
-- 📰 Sentiment analysis of financial news using LSTM
-- 🧮 Random Forest regression for price prediction
-- 🌐 Streamlit app for interactive use
-- ⚙️ FastAPI backend for programmatic access
-- 📊 Compare actual vs predicted stock prices
-- 🔄 GitHub Actions workflow for CI/CD
+## 📁 Folder Structure
 
-## 📁 Project Structure
-
-. ├── .github/workflows/ # CI/CD config 
-  ├── dev-branch-checks.yml 
-  ├── backend/ # (Optional) backend modules 
-  ├── tests/ # Unit tests   
-  ├── compare.py # Compares actual and predicted prices
-  ├── final_model.py # Streamlit web app 
-  ├── main.py # FastAPI backend 
-  ├── lstm_model.py # Sentiment score calculator 
-  ├── lstm.h5 # Trained LSTM model 
-  ├── tokenizer1.pkl # Tokenizer for LSTM 
-  ├── scaler1.pkl # Scaler for features 
-  ├── sentiment_scaler1.pkl # Scaler for sentiment scores 
-  ├── target_scaler1.pkl # Scaler for target values 
-  ├── rf.py # Random Forest model logic 
-  ├── requirements.txt # Python dependencies 
-  ├── setup.cfg # Project configuration 
-  ├── readme.MD # README file
+. ├── backend/ │ ├── compare_utils.py │ ├── final_models_utils.py │ └── ... ├── .github/workflows/ │ └── dev-branch-checks.yml ├── final_model.py # Streamlit frontend ├── main.py # FastAPI backend ├── compare.py # Prediction comparison logic ├── rf.py # Random Forest model training ├── lstm_model.py # LSTM sentiment model ├── lstm.h5 # LSTM model weights ├── lstm.txt # LSTM summary/info ├── random_forest.txt # Random Forest summary/info ├── scaler1.pkl # Feature scaler ├── sentiment_scaler1.pkl # Sentiment score scaler ├── target_scaler1.pkl # Target scaler ├── tokenizer1.pkl # Tokenizer for sentiment data ├── requirements.txt ├── setup.cfg └── README.md
 
 ---
 
@@ -67,3 +46,8 @@ streamlit run compare.py
 Start the API server:
 uvicorn main:app --reload --port 8002
 Once running, visit http://127.0.0.1:8002/docs to explore and test API endpoints via Swagger UI.
+
+6. ✅ GitHub CI/CD
+
+CI/CD is managed using GitHub Actions. The workflow file:
+.github/workflows/dev-branch-checks.yml
