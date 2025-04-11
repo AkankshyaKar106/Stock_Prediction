@@ -43,8 +43,8 @@ This repository provides a full-stack stock prediction system using:
 
 ## ⚙️ Setup Instructions
 ### 1. 🔽 Clone the Repository
-```bash git clone https://github.com/AkankshyaKar106/Stock_Prediction
-cd Stock_Prediction```
+```bash git clone https://github.com/AkankshyaKar106/Stock_Prediction```
+```bash cd Stock_Prediction```
 
 ### 2. 📦 Install Dependencies
 ```bash pip install -r requirements.txt```
