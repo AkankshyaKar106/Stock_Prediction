@@ -73,21 +73,17 @@ Comparison App:
 streamlit run compare.py
 ```
 
-Access it in your browser at:
-```bash 
+### 🔗 Access the App  
 [Streamlit App](http://localhost:8501)
-```
 
 ### 5. ⚡ Run the FastAPI Server (Backend)
 ```bash 
 uvicorn main:app --reload --port 8002
 ```
 
-Once running, open the API docs at:
-```bash
-[Fast API Docs](http://127.0.0.1:8002/docs)
-```
+Once running, open the API docs at:  
+[👉 FastAPI Docs](http://127.0.0.1:8002/docs)
 
-### 6. ✅ GitHub CI/CD
-CI/CD is managed using GitHub Actions. The workflow file is located at:
-[Github Actions](.github/workflows/dev-branch-checks.yml)
+### 6. ✅ GitHub CI/CD  
+CI/CD is managed using GitHub Actions. The workflow file is located at:  
+[🔧 GitHub Actions Workflow](.github/workflows/dev-branch-checks.yml)
