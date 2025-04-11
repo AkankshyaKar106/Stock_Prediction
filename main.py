@@ -8,12 +8,14 @@ import pytz
 import uuid
 import uvicorn
 
-from final_model import (
+from backend.final_model_utils import (
     load_lstm_model, load_rf_model, fetch_stock_data,
     get_next_market_datetime, process_ticker_data)
 
 # Import comparison functions
-from compare import get_target_price, calculate_prediction_accuracy
+from backend.compare_utils import (get_target_price,
+                                   calculate_prediction_accuracy)
+
 
 app = FastAPI(title="Stock Prediction and Analysis API")
 

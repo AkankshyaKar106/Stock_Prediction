@@ -32,78 +32,51 @@ jobs:
         if: steps.check_changes.outputs.skip_checks != 'true'
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11.7'
+          python-version: '3.10'
 
       - name: Install TA-Lib C library
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential wget
-          
-          # Download and install TA-Lib
           wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
           tar -xzf ta-lib-0.4.0-src.tar.gz
           cd ta-lib/
-          
-          # Fix format-security warning by patching the source
           sed -i 's/fprintf( out, prefix );/fprintf( out, "%s", prefix );/' src/tools/gen_code/gen_code.c
-          
-          # Configure with less strict warnings
           ./configure --prefix=/usr/local CFLAGS="-Wno-format-security"
-          
-          # Build with multiple cores but continue on errors
-          make -j$(nproc) || make
-          
-          # Install even if there were non-critical errors
+          make -j1
           sudo make install
-          
-          # Run ldconfig to update the shared library cache
           sudo ldconfig
-          
-          # Verify installation
-          ls -la /usr/local/lib/libta_lib*
       
-      - name: Install TA-Lib Python wrapper
+      - name: Install Python TA-Lib wrapper with numpy==1.26.4
         run: |
-          # Set environment variables for the build
           export TA_LIBRARY_PATH=/usr/local/lib
           export TA_INCLUDE_PATH=/usr/local/include
-          
-          # Update pip and dependencies
-          python -m pip install --upgrade pip setuptools wheel
-          pip install numpy==1.24.3  # Specific version for compatibility
-          
-          # Install compatible Cython version
-          pip install Cython==0.29.36
-          
-          # Try multiple installation methods
-          echo "Attempting to install TA-Lib Python wrapper..."
-          
-          # Try prebuilt wheel first based on Python version
-          python_version=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
-          echo "Detected Python version: $python_version"
-          
-          if [[ "$python_version" == "3.11" ]]; then
-            pip install --no-cache-dir https://github.com/mrjbq7/ta-lib/releases/download/ta-lib-0.4.24/TA_Lib-0.4.24-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl || true
-          elif [[ "$python_version" == "3.10" ]]; then
-            pip install --no-cache-dir https://github.com/mrjbq7/ta-lib/releases/download/ta-lib-0.4.24/TA_Lib-0.4.24-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl || true
-          fi
-          
-          # Check if installation succeeded
-          python -c "import talib" 2>/dev/null || {
-            echo "Wheel installation failed, trying source installation..."
-            LDFLAGS="-L/usr/local/lib" CFLAGS="-I/usr/local/include" pip install --no-binary :all: ta-lib==0.4.24 || {
-              echo "Source installation failed, trying git repository..."
-              pip install git+https://github.com/mrjbq7/ta-lib.git@TA_Lib-0.4.24
-            }
-          }
-          
-          # Verify installation
-          python -c "import talib; print('TA-Lib version:', talib.__version__)"
       
-      - name: Install remaining Python packages
+          # Clean previous versions
+          pip uninstall -y numpy ta-lib || true
+      
+          # Install numpy before TA-Lib
+          pip install numpy==1.26.4
+          pip install Cython==0.29.36
+      
+          # Compile and install TA-Lib from source
+          export CFLAGS="-I/usr/local/include"
+          export LDFLAGS="-L/usr/local/lib"
+          pip install --no-binary :all: ta-lib==0.4.32
+      
+          # Ensure numpy version remains fixed
+          pip install --force-reinstall numpy==1.26.4
+      
+          # Sanity checks
+          python -c "import talib; print('TA-Lib version:', talib.__version__)"
+          python -c "import numpy; print('NumPy version:', numpy.__version__)"
+      
+      - name: Install other dependencies
         run: |
-          pip install -r requirements.txt
-
+          pip install pytest
+          pip install -r requirements.txt --no-deps
+          pip install --force-reinstall numpy==1.26.4
+          pip install -r requirements.txt --upgrade-strategy only-if-needed
       - name: Install linting tools
         run: |
           pip install flake8
@@ -129,7 +102,35 @@ jobs:
       - name: Verify FastAPI App
         if: steps.check_changes.outputs.skip_checks != 'true'
         run: |
-          nohup uvicorn api:app --host 127.0.0.1 --port 8002 --reload &
-          sleep 5
-          curl -f http://127.0.0.1:8002/docs || (echo "FastAPI server failed to start" && exit 1)
-          echo "✅ FastAPI app is running successfully."
+          # Start FastAPI app in background
+          nohup uvicorn main:app --host 127.0.0.1 --port 8002 --reload > fastapi.log 2>&1 &
+          # Save the PID to be able to check if process is still running
+          FASTAPI_PID=$!
+          
+          # Increase wait time to 5 minutes (300 seconds) to allow for model download
+          echo "Waiting for FastAPI server to start (5 minutes max)..."
+          for i in {1..300}; do
+            # Check if server is responding
+            if curl -s -f http://127.0.0.1:8002/docs > /dev/null; then
+              echo "✅ FastAPI app is running successfully."
+              exit 0
+            fi
+            
+            # Check if the process is still running
+            if ! ps -p $FASTAPI_PID > /dev/null; then
+              echo "❌ FastAPI process has died. Showing logs:"
+              cat fastapi.log
+              exit 1
+            fi
+            
+            # Only print status every 10 seconds to avoid log spam
+            if [ $((i % 10)) -eq 0 ]; then
+              echo "Still waiting... ($i/300 seconds)"
+            fi
+            
+            sleep 1
+          done
+          
+          echo "❌ Timeout waiting for FastAPI server to start. Showing logs:"
+          cat fastapi.log
+          exit 1
