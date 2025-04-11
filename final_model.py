@@ -5,7 +5,7 @@ import pytz
 
 from backend.final_model_utils import (
     load_lstm_model, load_rf_model, fetch_bse_sensex_tickers,
-    fetch_nse_nifty_500_tickers,fetch_stock_data, get_next_market_datetime,
+    fetch_nse_nifty_500_tickers, fetch_stock_data, get_next_market_datetime,
     process_ticker_data, create_predictions_table, save_prediction
 )
 
