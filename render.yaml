@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: fastapi-talib-app
+    name: stock-price-prediction-app
     env: docker
     dockerfilePath: ./Dockerfile
     plan: free
