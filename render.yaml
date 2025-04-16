@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: fastapi-talib-app
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
