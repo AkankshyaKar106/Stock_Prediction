@@ -4,3 +4,8 @@ services:
     env: docker
     dockerfilePath: ./Dockerfile
     plan: free
+    buildCommand: "pip install -r requirements.txt"  # Ensures dependencies are installed on Render.
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"  # Uses Render's PORT environment variable.
+    envVars:
+      - key: PORT
+        value: "10000"  # Explicitly set the PORT environment variable in Render if needed (Render sets it automatically but this ensures it is consistent).
