@@ -5,7 +5,7 @@ services:
     dockerfilePath: ./Dockerfile
     plan: free
     buildCommand: "pip install -r requirements.txt"  # Ensures dependencies are installed on Render.
-    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"  # Uses Render's PORT environment variable.
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT --timeout-keep-alive 600"  # Uses Render's PORT environment variable and sets a timeout.
     envVars:
       - key: PORT
         value: "10000"  # Explicitly set the PORT environment variable in Render if needed (Render sets it automatically but this ensures it is consistent).
