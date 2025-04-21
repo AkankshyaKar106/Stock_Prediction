@@ -98,7 +98,7 @@ def fetch_bse_sensex_tickers():
 
 def fetch_nse_nifty_500_tickers():
     url = "https://en.wikipedia.org/wiki/NIFTY_500"
-    return fetch_tickers(url, table_index=2, ticker_column=3)
+    return fetch_tickers(url, table_index=4, ticker_column=3)
 
 
 def fetch_stock_data(ticker, prediction_date):
