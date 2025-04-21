@@ -43,8 +43,7 @@ def load_rf_model():
         gdown.download(rf_url, temp_file, quiet=False)
 
         # Load the model from the temp file
-        with open(temp_file, "rb") as f:
-            rf_model = pickle.load(f)
+        rf_model = joblib.load(temp_file)
 
         # Remove temp file after loading
         os.remove(temp_file)
