@@ -29,7 +29,7 @@ def load_lstm_model():
             tokenizer = pickle.load(f)
         return lstm_model, tokenizer
     except Exception as e:
-        st.error(f"Error loading LSTM model or tokenizer: {e}")
+        print(f"Error loading LSTM model or tokenizer: {e}")
         return None, None
 
 
@@ -60,7 +60,7 @@ def load_rf_model():
             sentiment_scaler = pickle.load(f)
         return rf_model, scaler, target_scaler, sentiment_scaler
     except Exception as e:
-        st.error(f"Error loading Random Forest model or scaler: {e}")
+        print(f"Error loading Random Forest model or scaler: {e}")
         return None, None, None, None
 
 
