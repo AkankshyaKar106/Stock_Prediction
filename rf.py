@@ -87,7 +87,8 @@ def train_model(data, features, target, model_path, scaler_path,
 
     y_train_scaled = target_scaler.fit_transform(y_train.values.reshape(-1, 1))
 
-    rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
+    rf_model = RandomForestRegressor(n_estimators=100, max_depth=20,
+                                     random_state=42)
     rf_model.fit(x_train_scaled, y_train_scaled.ravel())
 
     with open(model_path, "wb") as f:
