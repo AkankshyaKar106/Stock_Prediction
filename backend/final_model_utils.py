@@ -61,7 +61,7 @@ def load_rf_model():
         return rf_model, scaler, target_scaler, sentiment_scaler
     except Exception as e:
         st.error(f"Error loading Random Forest model or scaler: {e}")
-        return None, None, None
+        return None, None, None, None
 
 
 def fetch_tickers(url, table_index, ticker_column, suffix_check=None):
