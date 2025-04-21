@@ -36,7 +36,7 @@ def load_lstm_model():
 def load_rf_model():
     try:
         rf_url = (
-            "https://drive.google.com/uc?id=1DA61ThQicrmJUlZTZiGH9rpt03KHRTAL")
+            "https://drive.google.com/uc?id=1O5_ynexhyLDYGiOBpzNibI5KqGiiNXKJ")
         temp_file = "temp_rf.pkl"  # Temporary file
 
         # Download the model temporarily
