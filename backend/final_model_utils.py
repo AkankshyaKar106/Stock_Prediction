@@ -9,6 +9,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from keras.metrics import MeanSquaredError
+import joblib
 import talib
 import pytz
 import sqlite3
