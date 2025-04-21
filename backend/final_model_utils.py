@@ -19,16 +19,21 @@ import os
 
 def load_lstm_model():
     try:
+        base_dir = os.path.dirname(os.path.dirname(__file__))
+
+        lstm_path = os.path.join(base_dir, "lstm.h5")
+        tokenizer_path = os.path.join(base_dir, "tokenizer1.pkl")
+
         lstm_model = load_model(
-            "D:/Qwegle/Qwegle/Algorithmic_Trading/lstm.h5", custom_objects={
-                "mse": MeanSquaredError()})
+            lstm_path, custom_objects={"mse": MeanSquaredError()})
         lstm_model.compile(
             optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
-        with open(
-                'D:/Qwegle/Qwegle/Algorithmic_Trading/tokenizer1.pkl', 'rb'
-                ) as f:
+
+        with open(tokenizer_path, 'rb') as f:
             tokenizer = pickle.load(f)
+
         return lstm_model, tokenizer
+
     except Exception as e:
         print(f"Error loading LSTM model or tokenizer: {e}")
         return None, None
@@ -48,18 +53,20 @@ def load_rf_model():
 
         # Remove temp file after loading
         os.remove(temp_file)
-        with open(
-                'D:/Qwegle/Qwegle/Algorithmic_Trading/scaler1.pkl', 'rb') as f:
+        base_dir = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), ".."))
+
+        with open(os.path.join(base_dir, 'scaler1.pkl'), 'rb') as f:
             scaler = pickle.load(f)
-        with open(
-                'D:/Qwegle/Qwegle/Algorithmic_Trading/target_scaler1.pkl', 'rb'
-                ) as f:
+
+        with open(os.path.join(base_dir, 'target_scaler1.pkl'), 'rb') as f:
             target_scaler = pickle.load(f)
-        with open(
-                'D:/Qwegle/Qwegle/Algorithmic_Trading/sentiment_scaler1.pkl',
-                'rb') as f:
+
+        with open(os.path.join(base_dir, 'sentiment_scaler1.pkl'), 'rb') as f:
             sentiment_scaler = pickle.load(f)
+
         return rf_model, scaler, target_scaler, sentiment_scaler
+
     except Exception as e:
         print(f"Error loading Random Forest model or scaler: {e}")
         return None, None, None, None
