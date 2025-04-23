@@ -13,4 +13,3 @@ streamlit
 pytz
 gdown
 joblib
-talib
