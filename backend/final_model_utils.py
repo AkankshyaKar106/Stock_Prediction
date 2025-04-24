@@ -27,7 +27,7 @@ def load_lstm_model():
         lstm_model = load_model(
             lstm_path, custom_objects={"mse": MeanSquaredError()})
         lstm_model.compile(
-            optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
+            optimizer="adam", loss="mse", metrics=["mae"])
 
         with open(tokenizer_path, 'rb') as f:
             tokenizer = pickle.load(f)
