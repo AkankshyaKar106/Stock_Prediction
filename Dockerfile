@@ -20,9 +20,6 @@ RUN wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz && \
     cd ta-lib && \
     ./configure --prefix=/usr && make && make install
 
-# After installing TA-Lib, reduce the size of the installed libraries
-RUN strip /usr/local/lib/libta_lib.*
-
 # Set TA-Lib environment variables for pip build
 ENV TA_LIBRARY_PATH=/usr/local/lib
 ENV TA_INCLUDE_PATH=/usr/local/include
