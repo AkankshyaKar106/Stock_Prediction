@@ -19,7 +19,7 @@ import os
 
 def load_lstm_model():
     try:
-        base_dir = os.path.dirname(os.path.dirname(__file__))
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
         lstm_path = os.path.join(base_dir, "lstm.h5")
         tokenizer_path = os.path.join(base_dir, "tokenizer1.pkl")
